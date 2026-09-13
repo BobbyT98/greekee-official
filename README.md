@@ -2,15 +2,15 @@
 
 Strained Greek-style yogurt bowls, made fresh in Punggol & Hougang, Singapore.
 
-This repo hosts the customer-facing order page for Greekee — a single-page site where customers browse the menu, build a custom bowl, and send their order straight to WhatsApp for confirmation and payment.
+This repo hosts the customer-facing order page for Greekee. A single-page site where customers browse the menu, build a custom bowl, and send their order straight to WhatsApp for confirmation and payment.
 
-**Live site:** [add your Vercel link here once deployed]
+**Live site:** greekee-official.vercel.app
 
 ---
 
 ## What this is
 
-A static, self-contained landing page — no backend, no database. Orders are collated in-browser and handed off to WhatsApp via a pre-filled message link (`wa.me`). Keeps things simple for a home-based food business at this stage.
+A static, self-contained landing page: no backend, no database. Orders are collated in-browser and handed off to WhatsApp via a pre-filled message link (`wa.me`). Keeps things simple for a home-based food business at this stage.
 
 ## Features
 
