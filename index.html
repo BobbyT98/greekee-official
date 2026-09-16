@@ -243,6 +243,31 @@
   }
   .add-btn:hover{background:var(--honey-light); border-color:var(--honey-light); color:var(--olive-deep);}
 
+  /* JUST THE YOGURT */
+  .yogurt-only-panel{
+    background:var(--white); border:1px solid var(--line); border-radius:18px;
+    padding:8px 22px; max-width:640px;
+  }
+  .yogurt-row{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:16px 0; border-bottom:1px solid var(--line); flex-wrap:wrap;
+  }
+  .yogurt-row:last-child{border-bottom:none;}
+  .yogurt-row-name{font-family:'Fraunces', serif; font-size:17px; font-weight:600; color:var(--olive-deep);}
+  .yogurt-row-price{font-size:12.5px; color:#7a765f; margin-top:2px; font-family:'IBM Plex Mono';}
+  .yogurt-row-controls{display:flex; align-items:center; gap:16px;}
+  .yogurt-stepper{display:flex; align-items:center; gap:10px;}
+  .yogurt-stepper .step-val{min-width:16px; text-align:center; font-weight:600; font-size:15px;}
+  .yogurt-add-btn{
+    background:var(--cream-deep); border:1px solid var(--line); color:var(--charcoal);
+    padding:9px 16px; border-radius:999px; font-weight:600; font-size:13px; cursor:pointer;
+    font-family:'Work Sans'; white-space:nowrap;
+  }
+  .yogurt-add-btn:hover{background:var(--honey-light); border-color:var(--honey-light); color:var(--olive-deep);}
+  @media (max-width:480px){
+    .yogurt-row-controls{width:100%; justify-content:space-between;}
+  }
+
   /* BUILD YOUR OWN */
   #build{background:var(--olive); color:var(--cream); border-radius:26px; margin:0 28px; padding:48px 40px;}
   #build .wrap{max-width:1064px; padding:0;}
@@ -475,6 +500,17 @@
   </div>
 </section>
 
+<section id="yogurt-only">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">For regulars</div>
+      <h2>Just the Yogurt</h2>
+      <p>Already know what you like? Order the strained base on its own, no toppings, at a lower price. Minimum 2 servings per order, one flavor per order.</p>
+    </div>
+    <div class="yogurt-only-panel" id="yogurtOnlyList"></div>
+  </div>
+</section>
+
 <section id="about">
   <div class="wrap section-head">
     <div class="eyebrow">Good to know</div>
@@ -674,6 +710,14 @@
     { id:'base-matcha', name:'Matcha', price:5.90 },
     { id:'base-milo', name:'Milo', price:5.90 },
     { id:'base-protein', name:'Protein', price:5.90 },
+  ];
+  const YOGURT_ONLY_MIN_QTY = 2;
+  const YOGURT_ONLY = [
+    { id:'jy-plain', flavor:'Plain strained', unitPrice:2.90 },
+    { id:'jy-berry', flavor:'Berry', unitPrice:3.90 },
+    { id:'jy-matcha', flavor:'Matcha', unitPrice:3.90 },
+    { id:'jy-milo', flavor:'Milo', unitPrice:3.90 },
+    { id:'jy-protein', flavor:'Protein', unitPrice:3.90 },
   ];
   const TOPPING_CATEGORIES = [
     { name:'Fruits', items:['Strawberry','Blueberry','Raspberry','Mango','Banana','Muscat grape'] },
@@ -909,10 +953,11 @@
     else btn.textContent = 'Add to order';
   }
 
-  function addToCart(entry){
+  function addToCart(entry, initialQty){
+    const add = initialQty || 1;
     const existing = cart.find(c => c.id === entry.id);
-    if (existing) existing.qty += 1;
-    else cart.push({ ...entry, qty:1 });
+    if (existing) existing.qty += add;
+    else cart.push({ ...entry, qty: add });
     renderCart();
     shakeCartBtn();
   }
@@ -927,9 +972,64 @@
   function changeQty(id, delta){
     const item = cart.find(c => c.id === id);
     if (!item) return;
-    item.qty += delta;
+    const newQty = item.qty + delta;
+    if (item.minQty && newQty < item.minQty) return; // can't step below minimum; use remove instead
+    item.qty = newQty;
     if (item.qty <= 0) cart = cart.filter(c => c.id !== id);
     renderCart();
+  }
+
+  function renderYogurtOnly(){
+    const wrap = document.getElementById('yogurtOnlyList');
+    wrap.innerHTML = YOGURT_ONLY.map(f => `
+      <div class="yogurt-row" data-id="${f.id}">
+        <div>
+          <div class="yogurt-row-name">${f.flavor}</div>
+          <div class="yogurt-row-price">${money(f.unitPrice)} / serving &middot; min ${YOGURT_ONLY_MIN_QTY}</div>
+        </div>
+        <div class="yogurt-row-controls">
+          <div class="yogurt-stepper">
+            <button class="qty-btn" type="button" data-step="-1">−</button>
+            <span class="step-val">${YOGURT_ONLY_MIN_QTY}</span>
+            <button class="qty-btn" type="button" data-step="1">+</button>
+          </div>
+          <button class="yogurt-add-btn" type="button">Add &middot; ${money(f.unitPrice * YOGURT_ONLY_MIN_QTY)}</button>
+        </div>
+      </div>
+    `).join('');
+
+    wrap.querySelectorAll('.yogurt-row').forEach(row => {
+      const flavor = YOGURT_ONLY.find(f => f.id === row.dataset.id);
+      const valEl = row.querySelector('.step-val');
+      const addBtn = row.querySelector('.yogurt-add-btn');
+      let qty = YOGURT_ONLY_MIN_QTY;
+
+      function updateRow(){
+        valEl.textContent = qty;
+        addBtn.textContent = `Add \u00b7 ${money(flavor.unitPrice * qty)}`;
+      }
+
+      row.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const next = qty + parseInt(btn.dataset.step);
+          if (next < YOGURT_ONLY_MIN_QTY) return;
+          qty = next;
+          updateRow();
+        });
+      });
+
+      addBtn.addEventListener('click', () => {
+        addToCart({
+          id: flavor.id,
+          name: 'Just the Yogurt \u2014 ' + flavor.flavor,
+          meta: qty + ' servings, no toppings',
+          unitPrice: flavor.unitPrice,
+          minQty: YOGURT_ONLY_MIN_QTY
+        }, qty);
+        qty = YOGURT_ONLY_MIN_QTY;
+        updateRow();
+      });
+    });
   }
 
   function cartTotal(){
@@ -1244,6 +1344,7 @@
 
   renderMenu();
   renderBuild();
+  renderYogurtOnly();
 
   document.getElementById('heroLogoBadge').src = document.querySelector('.logo-img').src;
 
