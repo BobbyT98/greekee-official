@@ -4,7 +4,7 @@ Strained Greek-style yogurt bowls, made fresh in Punggol & Hougang, Singapore.
 
 This repo hosts the customer-facing order page for Greekee. A single-page site where customers browse the menu, build a custom bowl, and send their order straight to WhatsApp for confirmation and payment.
 
-**Live site:** greekee-official.vercel.app
+**Live site:** greekee.vercel.app
 
 ---
 
