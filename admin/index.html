@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Greekee · Our orders</title><link rel="stylesheet" href="/admin/style.css"><script src="/assets/catalog.js" defer></script><script src="/admin/app.js" defer></script></head>
+<body>
+<header><a href="/" class="brand"><img src="/assets/brand.jpg" alt="Greekee"><span>OUR LITTLE ORDER DESK</span></a><div><span id="identity"></span><button id="logout" class="quiet" hidden>Sign out</button></div></header>
+<main>
+<section id="loginPanel" class="login card"><span class="eyebrow">JUST FOR THE GREEKEE TEAM</span><h1>Hey, bowl crew.</h1><p>Sign in to see what’s coming up.</p><form id="loginForm"><label>Email<input type="email" name="email" autocomplete="username" required></label><label>Password<input type="password" name="password" autocomplete="current-password" required></label><button class="primary" type="submit">Sign in</button></form><p class="small">Use the partner account created in Supabase. Ask the project owner if you need access or a password reset.</p></section>
+<p id="message" role="status" aria-live="polite"></p>
+<section id="workspace" hidden>
+<div class="heading"><div><span class="eyebrow" id="today"></span><h1>Let’s get scooping.</h1><p>Your orders, from first message to final pickup.</p></div><button id="newOrder" class="primary">+ Add an order</button></div>
+<div class="location-tabs" role="group" aria-label="Handling location"><button data-location="" aria-pressed="true">All locations</button><button data-location="Punggol" aria-pressed="false">Punggol · Fiona</button><button data-location="Hougang" aria-pressed="false">Hougang · Caleb</button></div>
+<div class="stats" id="stats"></div>
+<section class="card order-card"><div class="section-heading"><h2>The order list</h2><div class="actions"><button id="refresh" class="quiet">Refresh</button><button id="sync" class="quiet">Retry Sheets sync</button></div></div>
+<div class="filters"><label class="search">Find an order<input id="search" type="search" placeholder="Name, order number or phone"></label><label>Preparation<select id="status"><option value="">All statuses</option><option value="pending">Pending confirmation</option><option value="confirmed">Confirmed</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label><label>Payment<select id="payment"><option value="">All payments</option><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="refunded">Refunded</option></select></label><label>Due from<input id="from" type="date"></label><label>Due to<input id="to" type="date"></label></div>
+<p class="small" id="listNote"></p><div id="orderList"></div><button id="more" class="quiet" hidden>Load more orders</button>
+</section>
+<p class="small footnote">Check payments in the bank, then update them here. Google Sheets gets a reporting copy. Pending requests aren’t confirmed sales.</p>
+</section>
+</main>
+<dialog id="detailDialog"><div class="dialog-top"><span class="eyebrow" id="detailNumber"></span><button class="quiet" data-close="detailDialog" aria-label="Close order">✕</button></div><div id="detailContent"></div></dialog>
+<dialog id="addDialog"><div class="dialog-top"><span class="eyebrow">WHATSAPP, INSTAGRAM & FRIENDS</span><button class="quiet" data-close="addDialog" aria-label="Close new order">✕</button></div><h2>Add an order</h2><p class="small">Enter it once. We’ll save it as pending and unpaid.</p>
+<form id="manualForm"><div class="form-grid">
+<label>Name<input name="customer_name" required maxlength="100"></label><label>Phone<input name="phone" type="tel" required maxlength="30"></label>
+<label>Handled by<select name="location"><option>Punggol</option><option>Hougang</option></select></label><label>Sales platform<select name="source"><option>WhatsApp</option><option>Instagram</option><option>Telegram</option><option>Lemon8</option><option>Other</option></select></label>
+<label>Order date<input name="order_date" type="date" required></label><label>Collection / delivery date<input name="fulfillment_date" type="date" required></label>
+<label>Method<select name="fulfillment" id="manualMethod"><option value="pickup">Pickup</option><option value="delivery">Delivery</option></select></label><label>Point of contact<input name="point_of_contact" maxlength="100"></label>
+</div>
+<div id="manualDelivery" class="form-grid" hidden><label>Region<select name="delivery_region"><option>East</option><option>North</option><option>South</option><option>West</option></select></label><label>East area<select name="delivery_area" id="manualArea"></select></label><label class="wide">Address<textarea name="address" maxlength="400"></textarea></label><label>Agreed delivery fee ($)<input name="delivery_fee" type="number" min="0" max="200" step="0.01" placeholder="Leave blank for menu rate"></label></div>
+<h3>What’s in the order?</h3><p class="small">Each row is one bowl combination. Add-ons are per bowl; quantity multiplies the whole combination.</p><div id="manualItems"></div><button id="addItem" type="button" class="quiet">+ Another bowl / item</button>
+<div class="form-grid"><label>Discount ($)<input name="discount" type="number" min="0" step="0.01" value="0"></label><label>Reason for discount / agreed price<input name="adjustment_reason" maxlength="300"></label><label class="wide">Notes<textarea name="notes" maxlength="1500" placeholder="Allergies, pickup time, special requests…"></textarea></label></div>
+<div class="total-line"><span>Estimated order total</span><strong id="manualTotal">$0.00</strong></div><p id="manualError" role="alert" class="error"></p><button type="submit" class="primary">Save order</button></form></dialog>
+</body></html>

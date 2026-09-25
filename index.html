@@ -603,13 +603,16 @@
     <button class="close-btn" id="closeDrawer" aria-label="Close cart">×</button>
   </div>
   <div class="drawer-body" id="drawerBody">
+    <section id="orderReceipt" hidden style="padding:18px;background:#f7e3e7;border-radius:16px;margin-bottom:18px" aria-live="polite"></section>
     <div id="cartItemsList">
       <div class="empty-cart">Nothing here yet — add a bowl from the menu.</div>
     </div>
     <div id="checkoutForm" style="display:none;">
       <div class="field">
-        <label>Name</label>
-        <input type="text" id="custName" placeholder="Your name">
+        <label for="custName">Name</label>
+        <input type="text" id="custName" maxlength="100" autocomplete="name" placeholder="Your name">
+      </div>
+      <div class="field"><label for="custPhone">Phone / WhatsApp number</label><input type="tel" id="custPhone" autocomplete="tel" maxlength="30" placeholder="e.g. 9123 4567"><div style="display:none" aria-hidden="true"><input id="website" tabindex="-1" autocomplete="off"></div>
       </div>
       <div class="toggle-row">
         <button class="toggle-btn active" id="pickupBtn" data-mode="pickup">Pickup</button>
@@ -637,8 +640,8 @@
         </select>
       </div>
       <div class="field" id="eastLocationField" style="display:none;">
-        <label>East location</label>
-        <select id="eastLocation"></select>
+        <label for="eastLocation">East location</label>
+        <select id="eastLocation"></select><label for="eastDate" style="margin-top:12px">Preferred delivery date</label><input type="date" id="eastDate"><div class="fine-print">We’ll confirm delivery timing on WhatsApp.</div>
       </div>
       <div class="field" id="nswDateField" style="display:none;">
         <label>Delivery date (weekends only)</label>
@@ -668,11 +671,12 @@
         <button type="button" class="info-btn" id="infoToggle" aria-label="Order info" aria-expanded="false">i</button>
       </span>
     </div>
-    <button class="whatsapp-btn" id="sendOrder">Send order on WhatsApp →</button>
-    <div class="info-popover" id="infoPopover" hidden>This opens WhatsApp with your order filled in — nothing is charged or confirmed until we reply. Delivery fee &amp; availability confirmed by us based on your address.</div>
+    <p id="checkoutError" role="alert" style="color:#962648;margin:10px 0"></p><button class="whatsapp-btn" id="sendOrder">Continue to WhatsApp →</button><p id="captureNote" class="fine-print" style="margin-top:8px">We use your details to prepare and contact you about your order. Availability and payment are confirmed on WhatsApp.</p>
+    <div class="info-popover" id="infoPopover" hidden>Continue to WhatsApp and send the prepared message. Your request is only confirmed when we reply; submitting it does not take payment. Delivery fee &amp; availability confirmed by us based on your address.</div>
   </div>
 </div>
 
+<script src="/assets/catalog.js"></script>
 <script>
   const WHATSAPP_NUMBERS = {
     Punggol: "6581864984",
@@ -725,9 +729,12 @@
     { name:'Sauces', items:['Honey drizzle','Berry sauce','Coconut milk','Choco sauce','Condensed milk','Biscoff sauce'] },
   ];
   const TOPPINGS = TOPPING_CATEGORIES.flatMap(c => c.items);
-  const TOPPING_PRICE = 1.00;
+  const TOPPING_PRICE = GREEKEE_CATALOG.toppingCents / 100;
   const MIN_TOPPINGS = 3;
 
+  MENU.forEach(p=>p.price=GREEKEE_CATALOG.products.find(x=>x.id===p.id).cents/100);
+  BASES.forEach(p=>p.price=GREEKEE_CATALOG.products.find(x=>x.id===p.id).cents/100);
+  YOGURT_ONLY.forEach(p=>p.unitPrice=GREEKEE_CATALOG.products.find(x=>x.id===p.id).cents/100);
   let cart = []; // {id, name, meta, unitPrice, qty}
   let buildState = { base:null, toppings:new Map() };
 
@@ -794,7 +801,7 @@
     grid.querySelectorAll('.add-plain').forEach(btn => {
       btn.addEventListener('click', () => {
         const item = MENU.find(m => m.id === btn.dataset.id);
-        addToCart({ id:item.id, name:item.name, meta:'', unitPrice:item.price });
+        addToCart({ id:item.id, product_id:item.id, addons:[], name:item.name, meta:'', unitPrice:item.price });
       });
     });
 
@@ -830,6 +837,7 @@
         addToCart({
           id: totalToppingQty ? (item.id + '-extra-' + Date.now()) : item.id,
           name: item.name,
+          product_id:item.id, addons:Array.from(stateMap,([name,quantity])=>({name,quantity})),
           meta: extrasList.length ? ('+ ' + extrasList.join(', ')) : '',
           unitPrice
         });
@@ -912,6 +920,7 @@
       addToCart({
         id: 'custom-' + Date.now(),
         name: 'Build Your Own — ' + buildState.base.name,
+        product_id:buildState.base.id, addons:Array.from(buildState.toppings,([name,quantity])=>({name,quantity})),
         meta: toppingsList.length ? ('+ ' + toppingsList.join(', ')) : 'No toppings',
         unitPrice
       });
@@ -920,7 +929,7 @@
         row.classList.remove('active');
         row.querySelector('.topping-row-qty').textContent = '0';
       });
-      if (BASES.length === 1) baseWrap.querySelector('.chip').classList.add('selected');
+      baseWrap.querySelectorAll('.chip').forEach(c=>c.classList.toggle('selected', BASES.length===1));
       updateToppingsLock();
       renderBuildSummary();
     });
@@ -1020,7 +1029,7 @@
 
       addBtn.addEventListener('click', () => {
         addToCart({
-          id: flavor.id,
+          id: flavor.id, product_id:flavor.id, addons:[],
           name: 'Just the Yogurt \u2014 ' + flavor.flavor,
           meta: qty + ' servings, no toppings',
           unitPrice: flavor.unitPrice,
@@ -1178,25 +1187,16 @@
   });
 
   function pad2(n){ return String(n).padStart(2,'0'); }
-  function toDateInputValue(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  function toDateInputValue(d){ return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); }
 
-  function formatTime(d){
-    let h = d.getHours();
-    const m = d.getMinutes();
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12; if (h === 0) h = 12;
-    return `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
-  }
-  function formatPickupLabel(d){
-    const dateStr = d.toLocaleDateString('en-SG', { weekday:'short', day:'numeric', month:'short' });
-    return `${dateStr}, ${formatTime(d)}`;
-  }
+  function formatTime(d){return d.toLocaleTimeString('en-SG',{timeZone:'Asia/Singapore',hour:'numeric',minute:'2-digit'});}
+  function formatPickupLabel(d){return d.toLocaleString('en-SG',{timeZone:'Asia/Singapore',weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});}
 
   function getPickupSlotsForDate(dateStr){
     const [y, m, d] = dateStr.split('-').map(Number);
     const now = new Date();
-    const opening = new Date(y, m - 1, d, 10, 0, 0, 0);
-    const lastSlot = new Date(y, m - 1, d, 22, 0, 0, 0); // last pickup slot 10:00 PM (closing time)
+    const opening = new Date(dateStr+'T10:00:00+08:00');
+    const lastSlot = new Date(dateStr+'T22:00:00+08:00'); // last pickup slot 10:00 PM (closing time)
     const isToday = toDateInputValue(now) === dateStr;
     let start = opening;
     if (isToday){
@@ -1277,71 +1277,6 @@
     }
   });
 
-  document.getElementById('sendOrder').addEventListener('click', () => {
-    if (cart.length === 0) return;
-    const name = document.getElementById('custName').value.trim();
-    const address = document.getElementById('custAddress').value.trim();
-    const notes = document.getElementById('custNotes').value.trim();
-    const pickupTimeSelect = document.getElementById('pickupTime');
-    const pickupTimeValue = pickupTimeSelect.value;
-
-    if (!name){
-      alert('Please add your name so we can confirm the order.');
-      return;
-    }
-    if (mode === 'delivery' && !address){
-      alert('Please add a delivery address.');
-      return;
-    }
-    if (mode === 'pickup' && (!pickupTimeValue || pickupTimeSelect.disabled)){
-      alert('Please choose a valid pickup date and time — no more slots are available for the date selected.');
-      return;
-    }
-
-    let deliveryInfo = null;
-    if (mode === 'delivery'){
-      deliveryInfo = computeDelivery();
-      if (deliveryInfo.weekendOnly){
-        const nswDateVal = document.getElementById('nswDate').value;
-        if (!nswDateVal){
-          alert(`Please choose a weekend delivery date for ${deliveryInfo.region} delivery.`);
-          return;
-        }
-      }
-    }
-
-    let msg = `Hi Greekee! I'd like to order:\n\n`;
-    cart.forEach(c => {
-      msg += `• ${c.qty} x ${c.name}${c.meta ? ' (' + c.meta + ')' : ''} — ${money(c.unitPrice * c.qty)}\n`;
-    });
-    msg += `\nSubtotal: ${money(cartTotal())}\n`;
-    msg += `\nFulfillment: ${mode === 'pickup' ? 'Pickup' : 'Delivery'}\n`;
-    if (mode === 'pickup'){
-      msg += `Pickup location: ${pickupLoc}\n`;
-      msg += `Pickup time: ${formatPickupLabel(new Date(pickupTimeValue))}\n`;
-    }
-    if (mode === 'delivery'){
-      msg += `Delivery region: ${deliveryInfo.region}${deliveryInfo.region === 'East' ? ' (' + deliveryInfo.location + ')' : ''}\n`;
-      msg += `Address: ${address}\n`;
-      if (deliveryInfo.weekendOnly){
-        const nswDateVal = document.getElementById('nswDate').value;
-        const [y,m,d] = nswDateVal.split('-').map(Number);
-        msg += `Delivery date: ${new Date(y, m - 1, d).toLocaleDateString('en-SG', { weekday:'short', day:'numeric', month:'short' })}\n`;
-      }
-      msg += `Delivery fee: ${deliveryInfo.free ? 'Free' : money(deliveryInfo.fee)}\n`;
-      msg += `Order total incl. delivery: ${money(cartTotal() + deliveryInfo.fee)}\n`;
-    }
-    msg += `Name: ${name}\n`;
-    if (notes) msg += `Notes: ${notes}\n`;
-
-    let number;
-    if (mode === 'pickup') number = WHATSAPP_NUMBERS[pickupLoc];
-    else number = deliveryInfo.whatsapp;
-
-    const url = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
-  });
-
   renderMenu();
   renderBuild();
   renderYogurtOnly();
@@ -1359,5 +1294,6 @@
   document.getElementById('heroTag').textContent = todaysBowl.name + " \u00b7 today's bowl";
 </script>
 
+<script src="/assets/checkout.js"></script>
 </body>
 </html>
