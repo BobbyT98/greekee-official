@@ -12,16 +12,30 @@ Test orders go only to the test database and TEST Sheet tabs. Real orders go onl
 |---|---|---|
 | Supabase project | Greekee-Test — created, schema installed | Greekee |
 | Supabase project reference | mgulbszcffsihvnxmqkm | msgzyactnouzznkhrvgf |
-| Website | https://greekee-official-51jjauhf8-greekee.vercel.app — connection verification pending | https://greekee.vercel.app |
+| Website | https://greekee-official-gg12drdaw-greekee.vercel.app — READY, test sync verified | https://greekee.vercel.app |
 | GitHub branch | greekee-order-preview | main |
 | Vercel environment | Preview | Production |
-| Google order tab | Greekee Orders — TEST (code prepared, not deployed) | Greekee Orders — LIVE (code prepared, not deployed) |
-| Google metrics tab | Greekee Dashboard — TEST (code prepared, not deployed) | Greekee Dashboard — LIVE (code prepared, not deployed) |
-| Order system status | Testing paused until isolated | New order system not promoted |
+| Google order tab | Greekee Orders — TEST (receiving test orders) | Greekee Orders — LIVE (planned) |
+| Google metrics tab | Greekee Dashboard — TEST (4 cards, 4 charts, populated) | Greekee Dashboard — LIVE (planned) |
+| Order system status | Isolated testing active; four orders synced | New order system not promoted |
 
 GitHub repository: https://github.com/BobbyT98/greekee-official
 
 Vercel project: greekee-official, team Greekee (team_gDtTclPqy8CVWJt9hfm0SXkx). Vercel connector access restored 26 September 2026; environment variable values remain private.
+
+## Latest verified state — 26 September 2026, 17:16 SGT
+
+Commit `2742b93c79073c7542364dd7087989c0de6c0971` on `greekee-order-preview` contains the redesigned `google-sheets/Code.gs`, test and handoff files. Vercel Preview deployment `dpl_A3eCM7PZip3wh47WYbxBuwUb19BP` is READY. `SHEETS_SYNC_URL` in Preview initially contained Markdown link syntax; it was corrected to a plain `/exec` URL. The TEST `SYNC_SECRET` was rotated in Apps Script and the matching Vercel Preview secret, then Preview was redeployed. Keep the secret out of this register and GitHub.
+
+Retrying from the staff dashboard synchronized four saved orders, including `GK-B498EDB70F6B`. All four Greekee-Test records show `revision=1` and `synced_revision=1`. The TEST order tab has product-line rows and add-ons, and the TEST dashboard shows 4 orders, 12 bowls to prepare, $0.00 paid, $87.80 unpaid, 4 pending confirmations, and four native charts. Its pending count format was corrected directly in the TEST tab from currency to number; the checked-in `Code.gs` already uses number formatting for that count. A production database query found none of the three identified test order numbers there. The older Fiona and Caleb quarterly tabs remain separate.
+
+Next verify an order edit updates the same rows, test Hougang access with Caleb, review the storefront/dashboard, and plan the separate LIVE receiver before merging to `main`. The sections below preserve the setup and investigation history; older pending-status statements are superseded by this verified state.
+
+## TEST order tab readability and partner flow — 26 September 2026
+
+The existing `Greekee Orders — TEST` tab was styled in place, without changing order values or formulas: olive header, cream alternating rows, frozen header plus order/customer columns, location/date filters, wider product and add-on fields, readable dates and currency, and coloured preparation/payment states. Sync keys and accounting helper columns are hidden but retained for the receiver and dashboard. Saved filter views `Fiona · Punggol orders` (ID `1518364465`) and `Caleb · Hougang orders` (ID `1389702870`) show location-specific lines sorted by due date; these views are convenience filters, not permissions. The revised local `google-sheets/Code.gs` applies the same visual layout when `setupGreekeeSync` builds a fresh TEST or LIVE order tab; this revision still needs to replace the Apps Script editor/deployment and be committed to the GitHub preview branch. The existing TEST tab already has the styling and continues to sync with its current deployed receiver.
+
+The staff site `/admin/` is the operational queue: incoming web submissions start pending/unpaid; staff enter Instagram/WhatsApp orders there, filter by location, date and status, refresh for new orders, then open a record to update preparation or verified payment. Sheets receives the reporting copy and should not be edited as the source of truth. Fiona is intended for Punggol, Caleb for Hougang, and Bobby for both. Greekee-Test currently has only Bobby's staff mapping; Fiona and Caleb need separate TEST Auth users and location-scoped mappings for Preview testing. Existing Production accounts do not grant TEST access. The old quarterly tabs continue their current use until the new system is launched on `main`.
 
 ## Old preview: do not use
 

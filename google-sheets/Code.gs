@@ -18,10 +18,29 @@ function prepareOrders_(ss,create) {
  if(sheet.getMaxColumns()<HEADERS.length)sheet.insertColumnsAfter(sheet.getMaxColumns(),HEADERS.length-sheet.getMaxColumns());
  const actual=sheet.getRange(1,1,1,HEADERS.length).getDisplayValues()[0];
  if(actual.every(v=>v==='')){
-  if(sheet.getLastRow()>1)throw Error('Order tab has data without headers');
+ if(sheet.getLastRow()>1)throw Error('Order tab has data without headers');
   sheet.getRange(1,1,1,HEADERS.length).setValues([HEADERS]);sheet.setFrozenRows(1);
  } else if(actual.some((v,i)=>v!==HEADERS[i]))throw Error('Order tab headers do not match; no rows changed');
+ if(create)styleOrders_(sheet); // Setup only; never spend time restyling on each incoming order.
  return sheet;
+}
+function styleOrders_(sheet){
+ const rows=sheet.getMaxRows();sheet.setFrozenRows(1);sheet.setFrozenColumns(4);sheet.setHiddenGridlines(true);sheet.setTabColor('#2F4935');
+ const header=sheet.getRange(1,1,1,24);header.setBackground('#2F4935').setFontColor('#FFFFFF').setFontWeight('bold').setFontSize(10).setWrap(true).setVerticalAlignment('middle');
+ if(!sheet.getRange(1,1,rows,24).getBandings().length)sheet.getRange(1,1,rows,24).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY,true,false).setHeaderRowColor('#2F4935').setFirstRowColor('#FFFFFF').setSecondRowColor('#FAF7EF');
+ sheet.setRowHeight(1,55);sheet.setRowHeights(2,rows-1,54);
+ [[2,175],[3,110],[4,170],[5,155],[6,245],[7,78],[8,285],[9,125],[10,165],[11,175],[12,100],[13,125],[14,145],[15,255],[16,120],[17,130],[18,120],[19,120]].forEach(([col,width])=>sheet.setColumnWidth(col,width));
+ sheet.hideColumns(1);sheet.hideColumns(13,2);sheet.hideColumns(16);sheet.hideColumns(18,7);
+ sheet.getRange(2,9,rows-1,2).setNumberFormat('ddd, d mmm');sheet.getRange(2,16,rows-1,4).setNumberFormat('$#,##0.00');
+ sheet.getRange(2,7,rows-1,1).setHorizontalAlignment('center');sheet.getRange(2,8,rows-1,1).setWrap(true);sheet.getRange(2,15,rows-1,1).setWrap(true);
+ if(!sheet.getFilter())sheet.getRange(1,1,rows,24).createFilter();
+ if(!sheet.getConditionalFormatRules().length){
+  const rules=[
+   [11,'Pending confirmation','#FAE6BB','#644B16'],[11,'Delivered','#DBEFDB','#2E6138'],[11,'Cancelled','#F7DDD7','#7D332B'],
+   [12,'paid','#DBEFDB','#2E6138'],[12,'unpaid','#FAE6BB','#644B16']
+  ].map(([col,value,bg,fg])=>SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(value).setBackground(bg).setFontColor(fg).setRanges([sheet.getRange(2,col,rows-1,1)]).build());
+  sheet.setConditionalFormatRules(rules);
+ }
 }
 function prepareDashboard_(ss){
  const {orders,dashboard}=names_();let sheet=ss.getSheetByName(dashboard);
