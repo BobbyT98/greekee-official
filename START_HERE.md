@@ -4,21 +4,23 @@ Read [Greekee_Testing_and_Production.md](Greekee_Testing_and_Production.md) for 
 
 ## Fiona: where we are now
 
-Your test order reached **Greekee-Test** only. It did not reach the production order table. The new phone picker and Google Sheet tabs are prepared in this download but **have not been uploaded or switched on online yet**.
+The latest preview has the new phone picker. Bobby tested a US number and add-ons; those orders reached **Greekee-Test** only. Two TEST tabs now exist in the existing Google Sheet, with a redesigned dashboard. **Automatic Sheet sync is not connected yet.**
 
-1. Send Bobby this ZIP. Ask him to unzip it and upload its files to GitHub branch **`greekee-order-preview`** in `BobbyT98/greekee-official`, preserving the folders. Keep `main` alone.
-2. Once Vercel says the new preview deployment is Ready, open the preview link, try a Singapore number and a foreign number, then add a test order with an add-on. The preview should save only to Greekee-Test.
-3. Bobby can then connect the **TEST** Google Sheet receiver using the instructions below. You should see two new tabs named **Greekee Orders — TEST** and **Greekee Dashboard — TEST**. Fiona's and Caleb's quarterly tabs remain as they are. We will review this test before switching on LIVE reporting.
+1. Bobby replaces `google-sheets/Code.gs` in the TEST Apps Script editor and preview GitHub branch with the latest revision that builds the improved dashboard. Keep `ENVIRONMENT = 'TEST'` and keep `main` alone.
+2. Deploy the Apps Script web app, then set its `/exec` URL, matching secret and `GREEKEE_ENVIRONMENT=TEST` in Vercel Preview only. Redeploy a fresh preview.
+3. Sync one TEST order and check the dashboard cards and charts. Fiona's and Caleb's quarterly tabs remain as they are. Review the result before switching on LIVE reporting.
 
-If step 1 is still pending, the old preview can accept test orders but will not have the new phone picker or Sheet dashboard.
+Until step 2 is complete, test orders save in Greekee-Test but do not appear in the Sheet automatically.
+
+Current sync check: the new Preview reports Sheet sync configured, but order GK-B498EDB70F6B stayed pending and no `doPost` run appeared in Apps Script Executions. Check that the deployed web app allows **Anyone** and points to the latest saved code. Retry the pending order through the staff dashboard after fixing the receiver; do not create a duplicate order. The four revised code/documentation files listed in the environment register still need a GitHub preview-branch commit.
 
 ## What is working
 
 - Production Supabase project `msgzyactnouzznkhrvgf` has the schema and the three staff accounts. Production website remains on `main` and has not received the new order code.
 - Test Supabase project `mgulbszcffsihvnxmqkm` has the same schema and a separate Bobby account.
-- The Vercel preview `greekee-official-51jjauhf8-greekee.vercel.app` is connected to the test project, with customer order capture enabled and Google Sheets sync disabled.
-- A test order was saved in the test project, while the production order table remained empty. The old preview connected to production was deleted.
-- The new code in this package includes an international phone country picker and a replacement Sheets receiver for dedicated TEST/LIVE tabs. **This code change still needs to be uploaded to the GitHub test branch and redeployed before it appears online.**
+- The Vercel preview `greekee-official-1v4k4f2uq-greekee.vercel.app` is connected to the test project, with customer order capture enabled and Google Sheets sync disabled.
+- Foreign phone entry and add-ons saved in the test project, with no matching order in production. The old preview connected to production was deleted.
+- The TEST order and dashboard tabs were created in the existing spreadsheet. The dashboard has four metric cards and four charts. The latest dashboard-generating `Code.gs` is local until Bobby replaces the earlier Apps Script and GitHub copies.
 
 ## Code update
 

@@ -25,13 +25,54 @@ function prepareOrders_(ss,create) {
 }
 function prepareDashboard_(ss){
  const {orders,dashboard}=names_();let sheet=ss.getSheetByName(dashboard);
- if(sheet){if(sheet.getRange(1,1).getDisplayValues()[0][0]!=='Greekee '+ENVIRONMENT+' dashboard')throw Error('Dashboard tab already contains other content');return;}
- sheet=ss.insertSheet(dashboard);sheet.getRange(1,1).setValue('Greekee '+ENVIRONMENT+' dashboard');
+ if(sheet){if(sheet.getRange(1,1).getDisplayValues()[0][0]!=='GREEKEE  /  ORDER PULSE')throw Error('Dashboard tab already contains other content');return;}
+ sheet=ss.insertSheet(dashboard);
  const source="'"+orders.replace(/'/g,"''")+"'!";
- const rows=[['Orders','=SUM('+source+'V2:V)'],['Bowls to prepare','=SUMIFS('+source+'G2:G,'+source+'K2:K,"<>Cancelled",'+source+'K2:K,"<>Delivered")'],['Paid total','=SUM('+source+'W2:W)'],['Unpaid amount','=SUM('+source+'X2:X)'],['Punggol orders','=SUMIFS('+source+'V2:V,'+source+'C2:C,"Punggol")'],['Hougang orders','=SUMIFS('+source+'V2:V,'+source+'C2:C,"Hougang")'],['Pending confirmation','=SUMIFS('+source+'V2:V,'+source+'K2:K,"Pending confirmation")'],['Product revenue (delivered)','=SUMIFS('+source+'P2:P,'+source+'K2:K,"Delivered")']];
- rows.forEach((row,i)=>{sheet.getRange(i+3,1).setValue(row[0]);sheet.getRange(i+3,2).setFormula(row[1]);});
- sheet.getRange(12,1).setValue('Totals count each order once. Paid total includes delivery and excludes refunded orders.');
- sheet.getRange(5,2,2,1).setNumberFormat('$0.00');sheet.getRange(10,2).setNumberFormat('$0.00');
+ sheet.setHiddenGridlines(true);sheet.setFrozenRows(3);sheet.setColumnWidths(1,12,104);
+ sheet.getRange('A1:L44').setBackground('#FAF7EF').setFontColor('#263A2D').setFontFamily('Arial');
+ function block_(a1,value,bg,fg,size){const range=sheet.getRange(a1);range.merge().setBackground(bg).setFontColor(fg).setFontSize(size).setFontWeight('bold').setVerticalAlignment('middle');const cell=range.getCell(1,1);if(value[0]==='=')cell.setFormula(value);else cell.setValue(value);}
+ block_('A1:L2','GREEKEE  /  ORDER PULSE','#2F4935','#FFFFFF',23);
+ block_('A3:L3',ENVIRONMENT+' ENVIRONMENT  •  Connected orders only  •  No historical quarterly entries','#E7ECD9','#3D5944',11);
+ block_('A9:L9','AT A GLANCE','#DCE8D4','#2F4935',13);
+ block_('A14:L14',"WHAT'S MOVING  /  live "+ENVIRONMENT+' data','#2F4935','#FFFFFF',13);
+ const cards=[
+  ['A','C','ORDERS','=SUM('+source+'V2:V)','#E9F1E2',false],
+  ['D','F','BOWLS TO PREPARE','=SUMIFS('+source+'G2:G,'+source+'K2:K,"<>Cancelled",'+source+'K2:K,"<>Delivered")','#F7ECD4',false],
+  ['G','I','PAID TOTAL','=SUM('+source+'W2:W)','#E2EEE4',true],
+  ['J','L','UNPAID','=SUM('+source+'X2:X)','#FAE7DC',true]
+ ];
+ cards.forEach(([left,right,label,formula,bg,money])=>{block_(left+'5:'+right+'5',label,bg,'#4A6650',10);block_(left+'6:'+right+'7',formula,bg,'#243A2B',20);if(money)sheet.getRange(left+'6').setNumberFormat('$#,##0.00');});
+ const small=[
+  ['A','C','PUNGGOL','=SUMIFS('+source+'V2:V,'+source+'C2:C,"Punggol")',false],
+  ['D','F','HOUGANG','=SUMIFS('+source+'V2:V,'+source+'C2:C,"Hougang")',false],
+  ['G','I','PENDING CONFIRMATION','=SUMIFS('+source+'V2:V,'+source+'K2:K,"Pending confirmation")',false],
+  ['J','L','DELIVERED PRODUCT REVENUE','=SUMIFS('+source+'P2:P,'+source+'K2:K,"Delivered")',true]
+ ];
+ small.forEach(([left,right,label,formula,money])=>{block_(left+'11:'+right+'11',label,'#F1EFE7','#5B6C5A',9);block_(left+'12:'+right+'12',formula,'#F1EFE7','#263A2D',19);if(money)sheet.getRange(left+'12').setNumberFormat('$#,##0.00');});
+ [[1,42],[2,22],[3,30],[4,16],[5,30],[6,34],[7,34],[8,18],[9,34],[10,14],[11,28],[12,48],[13,18],[14,34],[15,14]].forEach(([row,height])=>sheet.setRowHeight(row,height));
+ sheet.getRange('P1:Q1').setValues([['Product','Bowls']]);
+ sheet.getRange('P2').setFormula('=IFERROR(QUERY('+source+'A2:K,"select F,sum(G) where F is not null and K <> \'Cancelled\' group by F label F \'\', sum(G) \'\'",0),{"No orders yet",0})');
+ sheet.getRange('R1:S1').setValues([['Date','Bowls due']]);
+ for(let i=0;i<7;i++){sheet.getRange(i+2,18).setFormula('=TODAY()+'+i);sheet.getRange(i+2,19).setFormula('=SUMIFS('+source+'G2:G,'+source+'J2:J,R'+(i+2)+','+source+'K2:K,"<>Cancelled")');}
+ sheet.getRange('R2:R8').setNumberFormat('ddd d mmm');
+ sheet.getRange('T1:U3').setValues([['Location','Orders'],['Punggol',''],['Hougang','']]);
+ sheet.getRange('U2').setFormula('=SUMIFS('+source+'V2:V,'+source+'C2:C,"Punggol")');
+ sheet.getRange('U3').setFormula('=SUMIFS('+source+'V2:V,'+source+'C2:C,"Hougang")');
+ sheet.getRange('V1:W4').setValues([['Payment','Orders'],['Paid',''],['Unpaid',''],['Refunded','']]);
+ ['paid','unpaid','refunded'].forEach((status,i)=>sheet.getRange(i+2,23).setFormula('=SUMIFS('+source+'V2:V,'+source+'L2:L,"'+status+'")'));
+ const charts=[
+  [Charts.ChartType.BAR,'Best-selling bowls','P1:Q51',16,1,'#728E56'],
+  [Charts.ChartType.COLUMN,'Next 7 days','R1:S8',16,7,'#D9A844'],
+  [Charts.ChartType.PIE,'Orders by location','T1:U3',35,1,'#728E56'],
+  [Charts.ChartType.PIE,'Payment status','V1:W4',35,7,'#D9A844']
+ ];
+ charts.forEach(([type,title,data,row,col,accent])=>{
+  let builder=sheet.newChart().setChartType(type).addRange(sheet.getRange(data)).setPosition(row,col,0,0).setNumHeaders(1).setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.SHOW_BOTH).setOption('title',title).setOption('width',580).setOption('height',340).setOption('backgroundColor','#FFFFFF').setOption('colors',[accent]).setOption('legend',type===Charts.ChartType.PIE?{position:'right'}:'none');
+  if(type===Charts.ChartType.PIE)builder=builder.setOption('pieHole',0.56);
+  sheet.insertChart(builder.build());
+ });
+ block_('A54:L54',ENVIRONMENT+' ONLY  •  Charts update when orders sync. Historical Fiona and Caleb tabs are separate.','#E7ECD9','#3D5944',10);
+ sheet.hideColumns(16,8);
 }
 function setupGreekeeSync(){
  const secret=PropertiesService.getScriptProperties().getProperty('SYNC_SECRET');
