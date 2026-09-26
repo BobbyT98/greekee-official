@@ -1,5 +1,5 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');
-const {validateOrder,priceItems,whatsapp}=require('../lib/orders');
+const {validateOrder,priceItems,phoneNumber,whatsapp}=require('../lib/orders');
 const now=new Date('2026-09-24T03:00:00Z');
 function order(extra={}){return {customer_name:'Test customer',phone:'91234567',fulfillment:'pickup',location:'Punggol',fulfillment_date:'2026-09-24',pickup_slot:'2026-09-24T04:00:00Z',items:[{product_id:'berry-bliss',quantity:2,addons:[{name:'Mango',quantity:2}]}],...extra};}
 test('server derives prices and per-bowl extras, ignoring submitted amounts',()=>{const o=validateOrder(order({total_cents:1,items:[{product_id:'berry-bliss',quantity:2,addons:[{name:'Mango',quantity:2,unit_cents:0}],unit_cents:0}]}),{now});assert.equal(o.total_cents,2180);assert.equal(o.items[0].unit_cents,1090);});
@@ -11,3 +11,10 @@ test('pickup slot must be Singapore time, aligned, in hours, and after lead time
 test('NSW dates require future weekends and route to Punggol',()=>{const b=order({fulfillment:'delivery',delivery_region:'West',address:'Test address',fulfillment_date:'2026-09-26'});assert.equal(validateOrder(b,{now}).delivery_fee_cents,1000);assert.throws(()=>validateOrder({...b,fulfillment_date:'2026-09-25'},{now}),/weekend/);assert.throws(()=>validateOrder({...b,fulfillment_date:'2026-09-27'},{now:new Date('2026-09-27T01:00Z')}),/weekend/);});
 test('manual special prices and extras are allowed only to staff route',()=>{const b=order({source:'Instagram',order_date:'2026-09-24',pickup_slot:'',discount_cents:200,adjustment_reason:'Agreed group discount',items:[{product_id:'special-order',custom_name:'Milo bowl',custom_unit_cents:890,quantity:2,addons:[{name:'Extra yogurt 50g',quantity:1,unit_cents:250}]}]});const o=validateOrder(b,{manual:true,now});assert.equal(o.total_cents,2080);assert.throws(()=>validateOrder(b,{now}),/no longer/);});
 test('calendar dates and discount bounds are checked',()=>{assert.throws(()=>validateOrder(order({fulfillment_date:'2026-02-31'}),{now}));assert.throws(()=>validateOrder(order({source:'WhatsApp',order_date:'2026-09-24',discount_cents:99999,adjustment_reason:'x'}),{manual:true,now}));});
+test('phone country rules normalize Singapore and foreign numbers and reject wrong lengths',()=>{
+ assert.equal(phoneNumber('9123 4567'),'+6591234567');
+ assert.equal(phoneNumber('+1 (415) 555-2671'),'+14155552671');
+ assert.equal(phoneNumber('+44 7911 123456'),'+447911123456');
+ for(const bad of ['12345','+65 9123 456','+1 415 555 267','+99 123456789','+659123456789012345'])assert.throws(()=>phoneNumber(bad),/phone number/);
+ assert.equal(validateOrder(order({phone:'+447911123456'}),{now}).phone,'+447911123456');
+});

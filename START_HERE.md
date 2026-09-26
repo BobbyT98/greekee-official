@@ -1,150 +1,43 @@
-# Greekee order setup
+# Greekee setup — current handoff
 
-This package adds automatic order capture, a private partner dashboard and optional Google Sheets sync to your existing website. It is prepared code, not a live deployment. The database schema has now been installed in your existing Greekee Supabase project. Your Vercel website and Google Sheet have not been changed.
+Read [Greekee_Testing_and_Production.md](Greekee_Testing_and_Production.md) for verified project IDs, preview URLs, deployment status and separation rules. Bobby owns the technical accounts. Fiona handles Punggol; Caleb handles Hougang. Never paste passwords or API keys into GitHub or chat.
 
-## What you get
+## Fiona: where we are now
 
-- The same customer menu and prices as the downloaded GitHub repo.
-- A saved order number before the customer sends the WhatsApp message.
-- A partner page at `/admin/` with Punggol, Hougang and combined views.
-- Bowls, quantities, per-bowl add-ons, customer details, order date and collection/delivery date.
-- Separate payment and preparation statuses, plus who changed them and when.
-- Manual order entry for WhatsApp, Instagram and other channels. This includes special orders, custom extras, agreed delivery fees and discounts.
-- One-way reporting to your existing Fiona and Caleb quarterly tabs. Existing manually logged orders remain in the Sheet and are **not imported into the new dashboard**.
+Your test order reached **Greekee-Test** only. It did not reach the production order table. The new phone picker and Google Sheet tabs are prepared in this download but **have not been uploaded or switched on online yet**.
 
-The new partner page uses cream, pink and berry. The storefront uses the current GitHub version as its starting point; this package does not replace it with the earlier separate design mockup.
+1. Send Bobby this ZIP. Ask him to unzip it and upload its files to GitHub branch **`greekee-order-preview`** in `BobbyT98/greekee-official`, preserving the folders. Keep `main` alone.
+2. Once Vercel says the new preview deployment is Ready, open the preview link, try a Singapore number and a foreign number, then add a test order with an add-on. The preview should save only to Greekee-Test.
+3. Bobby can then connect the **TEST** Google Sheet receiver using the instructions below. You should see two new tabs named **Greekee Orders — TEST** and **Greekee Dashboard — TEST**. Fiona's and Caleb's quarterly tabs remain as they are. We will review this test before switching on LIVE reporting.
 
-## 1. Add your partner logins in Supabase
+If step 1 is still pending, the old preview can accept test orders but will not have the new phone picker or Sheet dashboard.
 
-**Database setup is already complete** in your Greekee project (`msgzyactnouzznkhrvgf`). The order tables, staff list, payment audit history and retry queue are installed. Access checks passed and the order table is empty. No historical orders were imported.
+## What is working
 
-`supabase/setup.sql` is included for reference or for setting up a separate empty preview project. You do not need to run it again on Greekee.
+- Production Supabase project `msgzyactnouzznkhrvgf` has the schema and the three staff accounts. Production website remains on `main` and has not received the new order code.
+- Test Supabase project `mgulbszcffsihvnxmqkm` has the same schema and a separate Bobby account.
+- The Vercel preview `greekee-official-51jjauhf8-greekee.vercel.app` is connected to the test project, with customer order capture enabled and Google Sheets sync disabled.
+- A test order was saved in the test project, while the production order table remained empty. The old preview connected to production was deleted.
+- The new code in this package includes an international phone country picker and a replacement Sheets receiver for dedicated TEST/LIVE tabs. **This code change still needs to be uploaded to the GitHub test branch and redeployed before it appears online.**
 
-The Data API must be enabled with the `public` schema exposed. The script explicitly grants access only to the server role; browser roles cannot read or edit these tables. Use a separate empty test project for a preview if production data is already being collected by the time you install this.
+## Code update
 
-In Supabase Authentication, create a confirmed email/password user for each partner who needs access. Give everyone their own account. There is no public sign-up page. You can disable new sign-ups in Supabase's Auth settings for this staff-only use.
+Upload the changed files to the root of branch `greekee-order-preview`, preserving the folders. The files are: `index.html`, `admin/index.html`, `admin/app.js`, `api/orders.js`, `assets/checkout.js`, `assets/phone.js`, `lib/orders.js`, `lib/sheets.js`, `scripts/build.js`, `package.json`, `package-lock.json`, `google-sheets/Code.gs`, `START_HERE.md`, and `Greekee_Testing_and_Production.md`. Do not upload `node_modules`, generated `public`, or any real `.env` file. `.env.example` is optional. Keep `main` untouched until preview checks pass.
 
-Copy each user's UUID from Supabase and run this in SQL Editor, replacing the placeholder UUIDs:
+The build installs the exact pinned `libphonenumber-js` dependency, then places its browser bundle in public assets. Both public checkout and the partner dashboard show country selection, defaulting to Singapore. The server checks the phone number again and saves international format, e.g. `+6591234567`.
 
-```sql
-insert into public.greekee_staff(user_id, display_name, locations)
-values
-  ('FIONA_USER_UUID', 'Fiona', array['Punggol','Hougang']),
-  ('CALEB_USER_UUID', 'Caleb', array['Punggol','Hougang']);
-```
+## Google Sheets: new tabs only
 
-Use only `array['Punggol']` or `array['Hougang']` if an account should see only one location. Creating an Auth user alone never grants partner access. To remove access, set that person's `greekee_staff.active` to false. Password resets are handled by the project owner in Supabase for this first version.
+The old quarterly-tab instructions have been retired. `google-sheets/Code.gs` now creates **Greekee Orders — TEST** and **Greekee Dashboard — TEST** in the existing GREEKEE spreadsheet. It does not edit Fiona's or Caleb's older quarterly tabs.
 
-## 2. Add Vercel environment variables
+For test sync, Bobby should create a **separate Apps Script project** containing this `Code.gs`, leave `ENVIRONMENT = 'TEST'`, and set a random `SYNC_SECRET` of at least 32 characters in its Script Properties. Run `setupGreekeeSync` once and authorize the script, then check that only the two new TEST tabs appeared. Deploy a Web app that executes as the owner and accepts requests from Anyone; signed requests are checked before writing. In Vercel Preview only, add `GREEKEE_ENVIRONMENT=TEST`, `SHEETS_SYNC_URL` (the `/exec` URL), and `SHEETS_SYNC_SECRET` (same secret). Redeploy a fresh preview, then test one order and update it. Check that the same rows update rather than duplicate.
 
-Add these under your Greekee project's environment variables. Use **Preview** first. Put the actual values in Vercel, not in GitHub, this chat, or the HTML.
+For live reporting later, create a **different Apps Script project** using the same code but set `ENVIRONMENT = 'LIVE'` and a different `SYNC_SECRET`. It creates **Greekee Orders — LIVE** and **Greekee Dashboard — LIVE**. Put that project's URL, secret and `GREEKEE_ENVIRONMENT=LIVE` in Vercel Production only after the test passes. Do not share a secret or receiver URL across environments.
 
-| Name | Value |
-|---|---|
-| `SUPABASE_URL` | `https://msgzyactnouzznkhrvgf.supabase.co` (or your separate test project URL) |
-| `SUPABASE_PUBLISHABLE_KEY` | The project's publishable API key |
-| `SUPABASE_SECRET_KEY` | The project's server secret API key |
-| `ORDER_CAPTURE_ENABLED` | `true` for the test preview; keep production `false` until tested |
+The dashboard shows order count, bowls to prepare, paid total, unpaid amount, location counts, pending orders and delivered product revenue. Order totals and delivery fees are recorded once per order; quantities and products are recorded per bowl line. Existing manually entered history stays in its original tabs and is not imported.
 
-The new secret and publishable keys are supported. Legacy service-role/anon keys also work if your project still uses them. No Supabase keys are exposed in browser JavaScript. The `.env.example` file contains placeholders only.
+## Before production launch
 
-Google Sheets can be connected later; leaving its two variables empty does not prevent order saving. The dashboard will clearly show that sync is not connected.
+Verify the new preview's storefront and staff forms, phone validation, one test order with an add-on, and the TEST Sheet receiver. Check that neither production orders nor LIVE or historical Sheet tabs changed. Then review the code update and merge to `main`. Set production order capture on only when ready for real customer orders.
 
-## 3. Push the files to a branch and review the preview
-
-Unzip the package and copy its contents into the **root of your existing repository**, preserving folders such as `api`, `admin`, `assets`, `lib` and `supabase`. Do not copy the outer ZIP folder as a subfolder. Include `package.json`, `package-lock.json`, `vercel.json`, and the hidden `.gitignore` file. `node_modules`, generated `public`, and real `.env` files should not be uploaded.
-
-Push a new branch such as `feature/greekee-order-management`. Your Vercel Git integration should build a preview for that branch. If your project has overrides, use:
-
-- Framework preset: Other
-- Node.js: 24.x
-- Build command: `npm run build`
-- Output directory: `public`
-- Root directory: the repository root
-
-Vercel handles the four functions under `api/`. The build copies only the storefront, assets and partner page into public output; SQL scripts and backend source are not published as static files.
-
-Open the preview's `/admin/` page and sign in. Check both handling locations. Then submit a test storefront order and verify that it appears as pending/unpaid and that its WhatsApp link points to the correct number. You do not have to send that WhatsApp message during testing.
-
-## 4. Connect the existing Google Sheet
-
-This part is optional for the first deployment. Use a **copy** of your Sheet when testing. Nothing in this package has written to the original Sheet.
-
-1. In the Sheet, open **Extensions > Apps Script**. Add the contents of `google-sheets/Code.gs` to the project without deleting unrelated existing scripts. If your project already has a `doPost` function, use a separate standalone Apps Script project with this code.
-2. `SPREADSHEET_ID` is prefilled with the exact GREEKEE file you provided. **Replace it with the test copy's ID for testing.** A copied Sheet does not automatically change this constant.
-3. In Apps Script Project Settings > Script Properties, add `SYNC_SECRET`: a randomly generated string of at least 32 characters. One way to generate it locally is `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Use this secret only in Apps Script and Vercel.
-4. Run `setupGreekeeSync` once and authorise access to the spreadsheet. This checks the order headers on row 21, reserves columns W:AF for sync metadata, sets the spreadsheet timezone to Singapore, and extends the existing dashboard's SUMIF/SUMIFS ranges so appended rows are included. It preserves existing A:J order rows.
-5. Deploy as a **Web app**, executing as you, with access set to **Anyone**. If your Google Workspace administrator disallows this deployment setting, do not weaken the organisation's policy: leave sync disabled until an approved integration is available. The endpoint authenticates signed requests; it does not provide a readable order-list endpoint.
-6. Add `SHEETS_SYNC_URL` in Vercel with the deployment's `/exec` URL, and `SHEETS_SYNC_SECRET` with the exact same secret. Redeploy the Vercel preview after adding variables.
-7. Create an order and update its status. Confirm that the **same rows** update rather than duplicate. Historical manually entered rows should remain untouched.
-
-The sync picks the correct quarter from the **order date**. For Q3 2026, it recognises your Fiona/Punggol and Caleb/Hougang order tab names, including the punctuation-stripped names in the Excel export. It stops safely if it finds no matching tab, multiple matching tabs, unexpected headers, or occupied metadata columns.
-
-Before the next quarter, either prepare your own matching tabs or run `createNextQuarterTabs`. That optional function creates empty tabs with the same order columns and basic delivered totals; it does not copy charts or old orders. Old orders continue syncing to their original quarter when their status changes.
-
-### How the Sheet columns work
-
-| Sheet field | Saved value |
-|---|---|
-| A Name | Customer name |
-| B Product | Canonical chart name, e.g. Choconana or Special Order |
-| C Quantity | Quantity of this exact bowl combination |
-| D Status | Preparation status; Completed becomes Delivered |
-| E Order date | Date the order was placed |
-| F Delivery date | Collection or delivery date |
-| G Price | Whole line's product total after allocated discount; excludes delivery |
-| H Sales platform | Website, WhatsApp, Instagram, etc. |
-| I Point of contact | Fiona/Caleb by default, or manual entry |
-| J Notes | Notes, add-ons, payment label and pickup time |
-| W:AF | Stable sync key, order number, revision, payment, add-ons, total, delivery, discount and payment-check timestamp |
-
-The existing Sheet's revenue formulas still count **Delivered product totals**, as they do today. They are not bank receipts and do not automatically deduct refunds. The partner dashboard's **Paid total** counts orders currently marked paid, includes delivery, and excludes fully refunded orders. These measures can differ. Dashboard totals cover only the loaded orders matching the visible filters; use Load more or Sheets for broader reporting.
-
-Each item combination gets its own Sheet row. The overall order total and delivery fee appear only once in the added metadata columns to avoid double counting. Add-ons are per bowl. Opening WhatsApp does not mark a request confirmed or paid.
-
-Successful saves attempt to sync immediately. If Google is unavailable, the order stays saved and unsynced. Use **Retry Sheets sync** in the dashboard to retry batches. There is no scheduled retry worker in this first version. Do not edit the generated rows in Sheets; future syncs overwrite those edits. Keep using the partner page for new order updates.
-
-## 5. Enable production
-
-After verifying the preview, set the corresponding **Production** variables in Vercel and point sync to the original Sheet's Apps Script deployment when ready. Merge/push the tested branch to `main`, then verify one real-world-sized test order on the production website. Set `ORDER_CAPTURE_ENABLED=true` only when the database setup is complete.
-
-**Uploading the code alone does not connect the database or Google Sheet.** Until capture is enabled, the storefront continues to hand orders to WhatsApp without claiming they were saved. If capture is enabled but saving fails, the customer sees an error and can retry the same submission; it does not silently bypass order capture.
-
-For a quick operational rollback, set `ORDER_CAPTURE_ENABLED=false` and redeploy. This returns customer checkout to the WhatsApp-only path without deleting saved orders. You can also roll back the code deployment in Vercel.
-
-## Daily use
-
-- Website requests arrive as **Pending confirmation + Unpaid**.
-- Confirm availability in WhatsApp, then mark the order **Confirmed** in the partner page.
-- Check the bank account, change payment to **Paid**, tick the verification box and save.
-- Move preparation through **Preparing**, **Ready** and **Completed**.
-- Add Instagram/WhatsApp-only orders using **Add an order**.
-- You can correct contact details, notes, address and due dates. Bowl combinations, quantities, handling location and prices are fixed after saving in this first version: cancel and recreate the order if those need correcting. If money has already been received, reconcile the old/new orders before marking payments so it is not counted twice.
-- Refund status represents a **full refund**; partial refunds are not supported yet.
-
-## Verification completed here
-
-- Executed the schema and role/security tests against an isolated PostgreSQL engine (PGlite).
-- Installed the schema on your live empty Greekee Supabase project, checked all four tables have RLS enabled, and verified browser roles have no table access. Security advisors returned only informational notices about deliberately absent browser policies.
-- Tested prices, per-bowl extras, delivery routing, time rules, duplicate submissions, concurrent edits, payment audit events, staff access and rate limits.
-- Tested the Apps Script receiver with an in-memory Sheets mock, including duplicate/out-of-order retries, interrupted writes, signed requests and preservation of manual history.
-- Passed desktop (1440px) and mobile (390px) browser checks for login, location filters, manual extras, payment verification, checkout capture, safe retries and repeat purchases. These used fictional orders and intercepted API responses; no customer or bank data was used.
-- Live Supabase Auth/Data API, Vercel deployment and Apps Script authorisation still need the account setup and preview checks above. No live integration success is claimed.
-
-## Developer commands
-
-```bash
-npm ci
-npm test
-npm run build
-# Optional local real-backend testing: put test project variables in .env.local
-npm run dev
-```
-
-The app has no runtime npm dependencies. PGlite is a pinned development-only dependency for database tests. Menu prices and options are shared in `assets/catalog.js`; descriptions and photographs remain in the storefront.
-
-References used for implementation:
-- https://supabase.com/docs/guides/api/securing-your-api
-- https://supabase.com/docs/guides/getting-started/api-keys
-- https://vercel.com/docs/functions/runtimes/node-js
-- https://developers.google.com/apps-script/reference/utilities/utilities
+Tests run locally with `npm ci`, `npm test` and `npm run build`. The package has no real credentials.

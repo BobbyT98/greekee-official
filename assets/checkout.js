@@ -8,12 +8,12 @@
  config.catch(()=>{});
  config.then(c=>{button.textContent=c.capture_enabled?'Save order & continue →':'Send order on WhatsApp →';if(c.capture_enabled)byId('captureNote').textContent='We’ll save this as a pending request. Send the WhatsApp message to confirm availability and arrange payment. Your details are used to fulfil your order.';}).catch(()=>{});
  const today=toDateInputValue(new Date());byId('eastDate').min=today;byId('eastDate').value=today;
+ GREEKEE_PHONE.bind(byId('custCountry'),byId('custPhone'));
  function requireValue(id,label){const value=byId(id).value.trim();if(!value){byId(id).focus();throw Error(label);}return value;}
  function collect(){
   const delivery=mode==='delivery'?computeDelivery():null;
   const customer_name=requireValue('custName','Please add your name.');
-  const phone=requireValue('custPhone','Please add your phone number.');
-  if(!/^\+?[\d\s()-]{8,25}$/.test(phone))throw Error('Please enter a valid phone number.');
+  const phone=GREEKEE_PHONE.normalize(byId('custCountry'),byId('custPhone'));
   const address=delivery?requireValue('custAddress','Please add your delivery address.'):'';
   const fulfillment_date=requireValue(mode==='pickup'?'pickupDate':delivery.region==='East'?'eastDate':'nswDate','Please choose a collection or delivery date.');
   const pickup_slot=mode==='pickup'?requireValue('pickupTime','Please choose an available pickup time.'):'';

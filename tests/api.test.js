@@ -2,7 +2,7 @@ const {test,beforeEach,afterEach}=require('node:test');const assert=require('nod
 const endpoint=require('../api/orders'),session=require('../api/session');const {sgDate}=require('../lib/orders');
 let rows,originalFetch;
 function response(value,status=200){return new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json'}});}
-beforeEach(()=>{rows=[];originalFetch=global.fetch;Object.assign(process.env,{SUPABASE_URL:'https://test-project.supabase.co',SUPABASE_SECRET_KEY:'sb_secret_test_only',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test_only',ORDER_CAPTURE_ENABLED:'true'});delete process.env.SHEETS_SYNC_URL;delete process.env.SHEETS_SYNC_SECRET;
+beforeEach(()=>{rows=[];originalFetch=global.fetch;Object.assign(process.env,{SUPABASE_URL:'https://test-project.supabase.co',SUPABASE_SECRET_KEY:'sb_secret_test_only',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test_only',ORDER_CAPTURE_ENABLED:'true',GREEKEE_ENVIRONMENT:'TEST'});delete process.env.SHEETS_SYNC_URL;delete process.env.SHEETS_SYNC_SECRET;
  global.fetch=async(url,options={})=>{
   const path=new URL(url).pathname,q=new URL(url).searchParams;
   if(path.endsWith('/greekee_rate_limit'))return response(true);

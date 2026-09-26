@@ -612,7 +612,7 @@
         <label for="custName">Name</label>
         <input type="text" id="custName" maxlength="100" autocomplete="name" placeholder="Your name">
       </div>
-      <div class="field"><label for="custPhone">Phone / WhatsApp number</label><input type="tel" id="custPhone" autocomplete="tel" maxlength="30" placeholder="e.g. 9123 4567"><div style="display:none" aria-hidden="true"><input id="website" tabindex="-1" autocomplete="off"></div>
+      <div class="field"><label for="custCountry">Phone / WhatsApp number</label><select id="custCountry" aria-label="Phone country code"></select><input type="tel" id="custPhone" autocomplete="tel-national" inputmode="tel" maxlength="30" placeholder="e.g. 9123 4567"><div style="display:none" aria-hidden="true"><input id="website" tabindex="-1" autocomplete="off"></div>
       </div>
       <div class="toggle-row">
         <button class="toggle-btn active" id="pickupBtn" data-mode="pickup">Pickup</button>
@@ -1294,6 +1294,8 @@
   document.getElementById('heroTag').textContent = todaysBowl.name + " \u00b7 today's bowl";
 </script>
 
+<script src="/assets/libphonenumber-max.js"></script>
+<script src="/assets/phone.js"></script>
 <script src="/assets/checkout.js"></script>
 </body>
 </html>

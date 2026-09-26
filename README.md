@@ -8,7 +8,7 @@ Customer ordering and a private partner order desk for Punggol and Hougang.
 - `/admin/` — partner login, location filters, orders, manual entry and payment history.
 - `api/` — four Vercel Node.js functions. Secrets stay on the server.
 - `supabase/setup.sql` — initial database schema, private access and audit history.
-- `google-sheets/Code.gs` — signed, one-way sync to the existing quarterly order tabs.
+- `google-sheets/Code.gs` — signed, one-way sync to new TEST or LIVE order and dashboard tabs.
 - `assets/catalog.js` — shared menu prices in Singapore cents.
 
 ```sh

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Greekee · Our orders</title><link rel="stylesheet" href="/admin/style.css"><script src="/assets/catalog.js" defer></script><script src="/admin/app.js" defer></script></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Greekee · Our orders</title><link rel="stylesheet" href="/admin/style.css"><script src="/assets/catalog.js" defer></script><script src="/assets/libphonenumber-max.js" defer></script><script src="/assets/phone.js" defer></script><script src="/admin/app.js" defer></script></head>
 <body>
 <header><a href="/" class="brand"><img src="/assets/brand.jpg" alt="Greekee"><span>OUR LITTLE ORDER DESK</span></a><div><span id="identity"></span><button id="logout" class="quiet" hidden>Sign out</button></div></header>
 <main>
@@ -19,7 +19,7 @@
 <dialog id="detailDialog"><div class="dialog-top"><span class="eyebrow" id="detailNumber"></span><button class="quiet" data-close="detailDialog" aria-label="Close order">✕</button></div><div id="detailContent"></div></dialog>
 <dialog id="addDialog"><div class="dialog-top"><span class="eyebrow">WHATSAPP, INSTAGRAM & FRIENDS</span><button class="quiet" data-close="addDialog" aria-label="Close new order">✕</button></div><h2>Add an order</h2><p class="small">Enter it once. We’ll save it as pending and unpaid.</p>
 <form id="manualForm"><div class="form-grid">
-<label>Name<input name="customer_name" required maxlength="100"></label><label>Phone<input name="phone" type="tel" required maxlength="30"></label>
+<label>Name<input name="customer_name" required maxlength="100"></label><label>Phone country<select name="phone_country" aria-label="Phone country code"></select></label><label>Phone number<input name="phone" type="tel" autocomplete="tel-national" required maxlength="30" placeholder="e.g. 9123 4567"></label>
 <label>Handled by<select name="location"><option>Punggol</option><option>Hougang</option></select></label><label>Sales platform<select name="source"><option>WhatsApp</option><option>Instagram</option><option>Telegram</option><option>Lemon8</option><option>Other</option></select></label>
 <label>Order date<input name="order_date" type="date" required></label><label>Collection / delivery date<input name="fulfillment_date" type="date" required></label>
 <label>Method<select name="fulfillment" id="manualMethod"><option value="pickup">Pickup</option><option value="delivery">Delivery</option></select></label><label>Point of contact<input name="point_of_contact" maxlength="100"></label>

@@ -1,6 +1,6 @@
 const {createHash}=require('node:crypto');
 const {handler,send,origin,body,supa,requireStaff,limit}=require('../lib/backend');
-const {assert,text,oneOf,date,validateOrder,whatsapp,AppError}=require('../lib/orders');
+const {assert,text,oneOf,date,phoneNumber,validateOrder,whatsapp,AppError}=require('../lib/orders');
 const {syncOne}=require('../lib/sheets');
 const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const publicReply=o=>({order_number:o.order_number,total_cents:o.total_cents,whatsapp_url:whatsapp(o)});
@@ -35,7 +35,8 @@ module.exports=handler(async(req,res)=>{
  const staff=await requireStaff(req);assert(uuid(b.id)&&Number.isInteger(b.revision),'Invalid order.');const p={};
  if(b.order_status!==undefined)p.order_status=oneOf(b.order_status,['pending','confirmed','preparing','ready','completed','cancelled'],'order status');
  if(b.payment_status!==undefined){p.payment_status=oneOf(b.payment_status,['unpaid','paid','refunded'],'payment status');assert(b.payment_verified===true,'Check the bank payment or refund before updating this status.');}
- for(const [k,max] of [['notes',1500],['customer_name',100],['phone',30],['address',400]])if(b[k]!==undefined)p[k]=text(b[k],max,k,['customer_name','phone'].includes(k));
+ for(const [k,max] of [['notes',1500],['customer_name',100],['address',400]])if(b[k]!==undefined)p[k]=text(b[k],max,k,k==='customer_name');
+ if(b.phone!==undefined)p.phone=phoneNumber(b.phone);
  if(b.fulfillment_date!==undefined)p.fulfillment_date=date(b.fulfillment_date,'collection date');
  if(b.pickup_slot!==undefined){assert(b.pickup_slot===null||!isNaN(Date.parse(b.pickup_slot)),'Invalid pickup time.');p.pickup_slot=b.pickup_slot;}
  assert(Object.keys(p).length,'No changes supplied.');
