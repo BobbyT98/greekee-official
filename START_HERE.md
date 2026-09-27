@@ -14,6 +14,8 @@ The TEST Preview is Ready. Bobby opened the order desk, saw both location queues
 
 The old `greekee-order-test` GitHub branch was deleted after verification that it matched `main`. Keep `greekee-order-preview` for TEST and `main` for Production. Do not run `setupGreekeeSync` again on the populated TEST spreadsheet. The original Q3 tabs are intact. The 324 old product lines are marked HISTORY in the shared TEST order tab and held separately in the private Greekee-Test Supabase legacy table; they do not appear as active orders.
 
+Customer checkout requires **at least 24 hours' notice** for pickup and delivery. Pickup slots are measured from the order time. Delivery has no selected hour, so its chosen date must start at least 24 hours after the order; this may mean the day after tomorrow. Staff can still enter a manually agreed exception or backfill a past order. No database, Supabase Auth or Apps Script change is required. Check the Preview date picker after uploading the pre-order code.
+
 ## Remaining work before Production
 
 1. Confirm customer-facing bowl names with Fiona. The storefront currently uses “Choco Nana” and “Sunset Dream”; the historical ranking uses its Q3 names.

@@ -20,7 +20,7 @@ beforeEach(()=>{rows=[];originalFetch=global.fetch;Object.assign(process.env,{SU
 });
 afterEach(()=>{global.fetch=originalFetch;});
 async function call(handler,method,b,headers={},url='/api/orders'){let result;const res={headers:{},setHeader(k,v){this.headers[k]=v;},end(s){result={status:this.statusCode,headers:this.headers,body:JSON.parse(s)};}};await handler({method,url,body:b,headers:{host:'greekee.test',origin:'https://greekee.test','content-type':'application/json',...headers},socket:{remoteAddress:'127.0.0.1'}},res);return result;}
-function order(){const due=sgDate(new Date(Date.now()+86400000));return {request_key:randomUUID(),customer_name:'API test',phone:'91234567',fulfillment:'pickup',location:'Punggol',fulfillment_date:due,pickup_slot:due+'T14:00:00+08:00',items:[{product_id:'berry-bliss',quantity:1,addons:[]}]};}
+function order(){const due=sgDate(new Date(Date.now()+2*86400000));return {request_key:randomUUID(),customer_name:'API test',phone:'91234567',fulfillment:'pickup',location:'Punggol',fulfillment_date:due,pickup_slot:due+'T14:00:00+08:00',items:[{product_id:'berry-bliss',quantity:1,addons:[]}]};}
 test('public reads and manual-order impersonation require staff login',async()=>{assert.equal((await call(endpoint,'GET',null)).status,401);assert.equal((await call(endpoint,'POST',{...order(),manual:true})).status,401);});
 test('partners can read both queues, but a different location cannot edit',async()=>{
  const created=await call(endpoint,'POST',order());assert.equal(created.status,201);rows[0].location='Hougang';
