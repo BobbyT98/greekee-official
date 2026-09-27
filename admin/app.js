@@ -5,7 +5,7 @@ const money=c=>'$'+(c/100).toFixed(2);
 const labels={pending:'Pending payment',accepted:'Orders accepted',delivered:'Delivered',exception:'Needs Bobby'};
 function stage(o){if(o.order_status==='cancelled'||o.payment_status==='refunded')return 'exception';if(o.order_status==='completed')return 'delivered';return o.payment_status==='paid'?'accepted':'pending';}
 const badge=s=>`<span class="badge ${esc(s)}">${esc(labels[s])}</span>`;
-let staff=null,orders=[],locationFilter='',hasMore=false,detail=null,manualAttempt=null,settings={};
+let staff=null,orders=[],locationFilter='',loadedLocation=null,loadedRange=null,hasMore=false,detail=null,manualAttempt=null,settings={},loadVersion=0;
 let refreshPromise=null;
 function message(s,error=false){$('#message').textContent=s;$('#message').className=error?'error':'';}
 async function api(path,options={},retry=true){
@@ -17,21 +17,22 @@ async function api(path,options={},retry=true){
  }
  if(!r.ok)throw Error(data.error||'Something went wrong. Please try again.');return data;
 }
-function showLogin(){staff=null;orders=[];$('#workspace').hidden=true;$('#loginPanel').hidden=false;$('#logout').hidden=true;$('#identity').textContent='';for(const d of document.querySelectorAll('dialog[open]'))d.close();}
+function showLogin(){staff=null;orders=[];loadedLocation=null;loadedRange=null;++loadVersion;$('#workspace').hidden=true;$('#loginPanel').hidden=false;$('#logout').hidden=true;$('#identity').textContent='';for(const d of document.querySelectorAll('dialog[open]'))d.close();}
 async function start(s){staff=s;$('#loginPanel').hidden=true;$('#workspace').hidden=false;$('#logout').hidden=false;$('#identity').textContent=s.display_name;$('#today').textContent=new Date().toLocaleDateString('en-SG',{timeZone:'Asia/Singapore',weekday:'long',day:'numeric',month:'long'});$('#manualForm').elements.location.innerHTML=s.locations.map(l=>`<option>${esc(l)}</option>`).join('');await load();}
 $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const form=new FormData(e.target);const d=await api('/api/session',{method:'POST',body:JSON.stringify({action:'login',email:form.get('email'),password:form.get('password')})});e.target.reset();message('');await start(d.staff);}catch(e){message(e.message,true);}finally{button.disabled=false;}});
 $('#logout').onclick=async()=>{try{await api('/api/session',{method:'POST',body:JSON.stringify({action:'logout'})});showLogin();message('Signed out.');}catch(e){message('Could not sign out. Please retry before leaving this device.',true);}};
 async function load(append=false){
+ const version=++loadVersion,requestedLocation=locationFilter,requestedRange=$('#from').value+'|'+$('#to').value;
  const params=new URLSearchParams({offset:String(append?orders.length:0)});if(locationFilter)params.set('location',locationFilter);for(const name of ['from','to'])if($('#'+name).value)params.set(name,$('#'+name).value);
  if($('#from').value&&$('#to').value&&$('#from').value>$('#to').value)throw Error('The end date must be after the start date.');
- const d=await api('/api/orders?'+params);orders=append?orders.concat(d.orders):d.orders;hasMore=d.has_more;render();
+ const d=await api('/api/orders?'+params);if(version!==loadVersion)return;orders=append?orders.concat(d.orders):d.orders;loadedLocation=requestedLocation;loadedRange=requestedRange;hasMore=d.has_more;render();
 }
 function safeLoad(append=false){load(append).catch(e=>message(e.message,true));}
-for(const b of document.querySelectorAll('[data-location]'))b.onclick=()=>{locationFilter=b.dataset.location;for(const other of document.querySelectorAll('[data-location]'))other.setAttribute('aria-pressed',String(other===b));safeLoad();};
+for(const b of document.querySelectorAll('[data-location]'))b.onclick=()=>{locationFilter=b.dataset.location;for(const other of document.querySelectorAll('[data-location]'))other.setAttribute('aria-pressed',String(other===b));if(loadedLocation===''&&!hasMore&&loadedRange===$('#from').value+'|'+$('#to').value){++loadVersion;render();}else safeLoad();};
 for(const id of ['search','status'])$('#'+id).addEventListener('input',render);
 for(const id of ['from','to'])$('#'+id).onchange=()=>safeLoad();
 $('#refresh').onclick=()=>safeLoad();$('#more').onclick=()=>safeLoad(true);
-function filtered(){const q=$('#search').value.toLowerCase().trim();return orders.filter(o=>(!q||[o.customer_name,o.order_number,o.phone].some(s=>s.toLowerCase().includes(q)))&&(!$('#status').value||stage(o)===$('#status').value));}
+function filtered(){const q=$('#search').value.toLowerCase().trim();return orders.filter(o=>(!locationFilter||o.location===locationFilter)&&(!q||[o.customer_name,o.order_number,o.phone].some(s=>s.toLowerCase().includes(q)))&&(!$('#status').value||stage(o)===$('#status').value));}
 function render(){
  const rows=filtered();const active=rows.filter(o=>stage(o)==='accepted');
  const stats=[['Pending payment',rows.filter(o=>stage(o)==='pending').length,'Waiting for payment check'],['Accepted orders',active.length,'To prepare or hand over'],['Bowls to prepare',active.reduce((n,o)=>n+o.items.reduce((s,i)=>s+i.quantity,0),0),'Accepted orders only'],['Delivered',rows.filter(o=>stage(o)==='delivered').length,'Handed to customers']];

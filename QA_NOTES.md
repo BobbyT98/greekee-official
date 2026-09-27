@@ -20,6 +20,7 @@
 3. **Shared queue visibility.** Fiona and Caleb can read both location queues. Their own location remains the boundary for adding and changing orders. Bobby can manage both when his staff record includes both locations.
 4. **Accessible checkout controls.** The phone input has a real label, and the selected pickup/delivery and location buttons expose their pressed state to assistive technology.
 5. **Historical bowl chart source.** The live TEST Sheet was already corrected to include named Q3 history plus accepted/delivered TEST bowls; this package keeps Apps Script and GitHub source aligned. History does not inflate current-order counts.
+6. **Order desk tab speed (follow-up).** Switching between All, Fiona and Caleb now filters the already loaded complete order list in the browser. The Refresh button and edits still request current data. For a queue larger than the first 100 orders, tabs keep their server request so the view is not mistaken for a complete list. A request sequence check prevents a slow earlier response from replacing the newest tab.
 
 ## Remaining checks and improvements
 
