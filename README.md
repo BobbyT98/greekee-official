@@ -1,15 +1,19 @@
-# Greekee
+# Greekee orders
 
-Customer ordering and a private partner order desk for Punggol and Hougang.
+Greekee's customer storefront, partner order desk, and Google Sheets reporting. Fiona handles Punggol pickup and most deliveries; Caleb handles Hougang pickup and deliveries to Hougang, Kovan or Buangkok.
 
-**Start with [START_HERE.md](START_HERE.md)** for Supabase, partner accounts, Vercel variables, preview testing and optional Google Sheets sync.
+| Area | Purpose |
+|---|---|
+| `/` | Customer menu and checkout. A request is saved first, then the customer continues on WhatsApp. |
+| `/admin/` | Staff login, manual orders, order updates, and Sheets sync retry. |
+| `api/`, `lib/` | Server validation, routing, and persistence. |
+| `assets/catalog.js` | Shared menu prices in Singapore cents. |
+| `google-sheets/Code.gs` | Signed, one-way TEST/LIVE reporting receiver. |
+| `supabase/setup.sql` | Database schema and access rules. |
 
-- `/` — existing storefront with server-validated order capture and WhatsApp handoff.
-- `/admin/` — partner login, location filters, orders, manual entry and payment history.
-- `api/` — four Vercel Node.js functions. Secrets stay on the server.
-- `supabase/setup.sql` — initial database schema, private access and audit history.
-- `google-sheets/Code.gs` — signed, one-way sync to new TEST or LIVE order and dashboard tabs.
-- `assets/catalog.js` — shared menu prices in Singapore cents.
+The order desk uses three everyday stages: **Pending payment**, **Orders accepted**, and **Delivered**. A manual order can have an agreed discount, including a full discount; the historical “FOC” label is not needed for new orders. Bank payment is checked before a paid stage is saved.
+
+**[START_HERE.md](START_HERE.md)** is Bobby's upload and verification guide. **[Greekee_Testing_and_Production.md](Greekee_Testing_and_Production.md)** records environment separation and how old orders are reported. Keep credentials in the relevant Vercel environment and Apps Script properties, never in GitHub.
 
 ```sh
 npm ci
@@ -18,4 +22,4 @@ npm run build
 npm run dev
 ```
 
-Order capture is off until `ORDER_CAPTURE_ENABLED=true`. WhatsApp and manual bank-payment checks remain part of the workflow. This does not add a payment gateway or import past orders.
+`public/`, `node_modules/`, and real `.env` files are generated or local and are excluded from Git. Production remains on `main` until the preview is approved.

@@ -37,8 +37,8 @@
   return 'https://wa.me/'+WHATSAPP_NUMBERS[location]+'?text='+encodeURIComponent("Hi Greekee! I'd like to order:\n\n"+list.join('\n'));
  }
  button.addEventListener('click',async()=>{
-  if(busy||!cart.length)return;error.textContent='';
-  let payload;try{payload=collect();}catch(e){error.textContent=e.message;return;}
+  if(busy||!cart.length)return;error.textContent='';error.hidden=true;
+  let payload;try{payload=collect();}catch(e){error.textContent=e.message;error.hidden=false;return;}
   busy=true;button.disabled=true;const original=button.textContent;button.textContent='Saving…';
   try {
    const settings=await config;
@@ -49,7 +49,7 @@
    receipt.replaceChildren();const title=document.createElement('h3');title.textContent='Your request is saved';const detail=document.createElement('p');detail.textContent=`${saved.order_number} · ${money(saved.total_cents/100)}. Next, send your message on WhatsApp. We’ll reply to confirm availability and payment.`;
    const link=document.createElement('a');link.href=saved.whatsapp_url;link.target='_blank';link.rel='noopener';link.className='whatsapp-btn';link.textContent='Open WhatsApp & send →';link.style.display='block';link.style.textAlign='center';link.style.marginTop='14px';
    receipt.append(title,detail,link);receipt.hidden=false;try{sessionStorage.removeItem(attempt.storageKey);}catch{}cart=[];renderCart();receipt.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }catch(e){error.textContent=e.name==='TimeoutError'?'This is taking longer than usual. Tap again to safely retry the same order.':e.message||'Could not connect. Please try again.';}
+  }catch(e){error.textContent=e.name==='TimeoutError'?'This is taking longer than usual. Tap again to safely retry the same order.':e.message||'Could not connect. Please try again.';error.hidden=false;}
   finally{busy=false;button.disabled=false;button.textContent=original;}
  });
 })();
