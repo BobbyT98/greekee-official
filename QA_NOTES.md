@@ -1,0 +1,34 @@
+# Greekee TEST — checkout and order desk audit
+
+27 September 2026. Scope: current deployed Preview storefront on desktop; local updated source, API, database and Sheets tests. This is a TEST audit. No new order was submitted during this pass, and Production was not changed.
+
+## Verified
+
+| Area | Result |
+|---|---|
+| Desktop storefront/cart | Menu, bowl cards, add-to-cart, cart drawer, total and fixed Save button rendered clearly at 1363 × 936. |
+| Checkout validation | Empty name and too-short Singapore phone produced inline errors before saving. |
+| Delivery pricing | East Pasir Ris showed a $6 fee, and changing to Kovan recalculated the fee to $4 for the same $8.90 bowl. |
+| Routing and safety | Automated tests cover location assignment, server-calculated price and add-ons, phone country lengths, pickup slots, discounts, parallel duplicate submissions, payment audit, revision conflicts, and TEST Sheets retries. |
+| Shared admin access | New API test checks that a Punggol partner can read a Hougang queue and order, but a cross-location PATCH is denied. The UI shows cross-location details without an edit form. |
+| Build | `npm test`: 31 passed, 0 failed. `npm run build`: passed. |
+
+## Fixed in this update
+
+1. **Pickup labels for overseas customers.** The storefront displayed a Singapore pickup instant in the visitor's browser time zone. It now formats both date and time with `Asia/Singapore`, matching the saved slot and server validation. Checked with an America/Los_Angeles process time zone.
+2. **Order flow wording.** The How to Order section now says the request is saved before WhatsApp opens.
+3. **Shared queue visibility.** Fiona and Caleb can read both location queues. Their own location remains the boundary for adding and changing orders. Bobby can manage both when his staff record includes both locations.
+4. **Accessible checkout controls.** The phone input has a real label, and the selected pickup/delivery and location buttons expose their pressed state to assistive technology.
+5. **Historical bowl chart source.** The live TEST Sheet was already corrected to include named Q3 history plus accepted/delivered TEST bowls; this package keeps Apps Script and GitHub source aligned. History does not inflate current-order counts.
+
+## Remaining checks and improvements
+
+| Priority | Item | Why it matters / next check |
+|---|---|---|
+| Before release | Sign in as Fiona and Caleb on the newly deployed Preview; confirm both can view all orders, only the assigned partner can edit, and Bobby can manage both. | The new code is local until Bobby uploads it; this live authenticated flow has not been exercised in this pass. |
+| Before release | Check the full storefront/cart and admin pages on a narrow phone after deployment. | The desktop visual pass was clear, but the mobile screenshot tool timed out; do not treat mobile layout as visually verified. |
+| Before release | Confirm customer-facing bowl names against the intended menu. | The site says “Choco Nana” and “Sunset Dream”; the historical chart uses “Choconana” and older Q3 names. Prices and IDs were deliberately left unchanged pending menu confirmation. |
+| Later | Let staff apply or revise a discount on an already saved website order, with a reason and audited total recalculation. | Today the discount is only in the **new manual order** form. This matters for a FOC decision made after a website checkout. |
+| Later | Consider an order-wide search or server-side stage filter for busy periods. | The page loads 100 orders at a time; search, status and summary cards filter/count only loaded rows, as the on-screen note says. |
+
+The admin login remains in place because the order desk contains private phone numbers, delivery addresses and payment actions. The refresh cookie lasts up to seven days, so ordinary return visits can reopen the desk without typing the password again. Removing login would expose those details to anyone with the URL.

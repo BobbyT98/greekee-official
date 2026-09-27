@@ -7,9 +7,9 @@ const publicReply=o=>({order_number:o.order_number,total_cents:o.total_cents,wha
 module.exports=handler(async(req,res)=>{
  if(req.method==='GET'){
   const staff=await requireStaff(req);const q=new URL(req.url,'https://local').searchParams;
-  if(q.has('id')){assert(uuid(q.get('id')),'Invalid order.');const orders=await supa('/rest/v1/greekee_orders?id=eq.'+q.get('id')+'&select=*');assert(orders.length&&staff.locations.includes(orders[0].location),'Order not found.',404);const events=await supa('/rest/v1/greekee_order_events?order_id=eq.'+q.get('id')+'&select=actor_name,changed_at,changes&order=changed_at.desc&limit=50');return send(res,200,{order:orders[0],events});}
-  let filter=`location=in.(${staff.locations.join(',')})`;
-  if(q.get('location')){assert(staff.locations.includes(q.get('location')),'Location unavailable.',403);filter='location=eq.'+q.get('location');}
+  if(q.has('id')){assert(uuid(q.get('id')),'Invalid order.');const orders=await supa('/rest/v1/greekee_orders?id=eq.'+q.get('id')+'&select=*');assert(orders.length,'Order not found.',404);const events=await supa('/rest/v1/greekee_order_events?order_id=eq.'+q.get('id')+'&select=actor_name,changed_at,changes&order=changed_at.desc&limit=50');return send(res,200,{order:orders[0],events});}
+  let filter='location=in.(Punggol,Hougang)';
+  if(q.get('location')){const location=oneOf(q.get('location'),['Punggol','Hougang'],'location');filter='location=eq.'+location;}
   for(const key of ['from','to'])if(q.get(key))filter+='&fulfillment_date='+(key==='from'?'gte.':'lte.')+date(q.get(key),'date filter');
   const offset=Number(q.get('offset')||0);assert(Number.isInteger(offset)&&offset>=0&&offset<=100000,'Invalid page.');
   const rows=await supa(`/rest/v1/greekee_orders?${filter}&select=*&order=created_at.desc,id.desc&limit=101&offset=${offset}`);

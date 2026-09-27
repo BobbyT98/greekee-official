@@ -14,13 +14,24 @@ beforeEach(()=>{rows=[];originalFetch=global.fetch;Object.assign(process.env,{SU
    if(q.has('request_key'))return response(rows.filter(r=>'eq.'+r.request_key===q.get('request_key')));
    return response(rows);
   }
+  if(path==='/rest/v1/greekee_order_events')return response([]);
   throw Error('Unexpected test fetch '+path);
  };
 });
 afterEach(()=>{global.fetch=originalFetch;});
-async function call(handler,method,b,headers={}){let result;const res={headers:{},setHeader(k,v){this.headers[k]=v;},end(s){result={status:this.statusCode,headers:this.headers,body:JSON.parse(s)};}};await handler({method,url:'/api/orders',body:b,headers:{host:'greekee.test',origin:'https://greekee.test','content-type':'application/json',...headers},socket:{remoteAddress:'127.0.0.1'}},res);return result;}
+async function call(handler,method,b,headers={},url='/api/orders'){let result;const res={headers:{},setHeader(k,v){this.headers[k]=v;},end(s){result={status:this.statusCode,headers:this.headers,body:JSON.parse(s)};}};await handler({method,url,body:b,headers:{host:'greekee.test',origin:'https://greekee.test','content-type':'application/json',...headers},socket:{remoteAddress:'127.0.0.1'}},res);return result;}
 function order(){const due=sgDate(new Date(Date.now()+86400000));return {request_key:randomUUID(),customer_name:'API test',phone:'91234567',fulfillment:'pickup',location:'Punggol',fulfillment_date:due,pickup_slot:due+'T14:00:00+08:00',items:[{product_id:'berry-bliss',quantity:1,addons:[]}]};}
 test('public reads and manual-order impersonation require staff login',async()=>{assert.equal((await call(endpoint,'GET',null)).status,401);assert.equal((await call(endpoint,'POST',{...order(),manual:true})).status,401);});
+test('partners can read both queues, but a different location cannot edit',async()=>{
+ const created=await call(endpoint,'POST',order());assert.equal(created.status,201);rows[0].location='Hougang';
+ const cookie={cookie:'gk_access=good'};
+ const all=await call(endpoint,'GET',null,cookie);assert.equal(all.status,200);assert.equal(all.body.orders[0].location,'Hougang');
+ const filtered=await call(endpoint,'GET',null,cookie,'/api/orders?location=Hougang');assert.equal(filtered.status,200);
+ const detail=await call(endpoint,'GET',null,cookie,'/api/orders?id='+rows[0].id);assert.equal(detail.status,200);
+ const denied=await call(endpoint,'PATCH',{id:rows[0].id,revision:1,notes:'wrong person'},cookie);assert.equal(denied.status,404);
+ assert.equal(rows[0].notes,'');
+ assert.equal((await call(endpoint,'GET',null,cookie,'/api/orders?location=Invalid')).status,400);
+});
 test('cross-origin requests are rejected before saving',async()=>{assert.equal((await call(endpoint,'POST',order(),{origin:'https://attacker.test'})).status,403);assert.equal(rows.length,0);});
 test('two concurrent identical submissions create exactly one order',async()=>{const body=order();const results=await Promise.all([call(endpoint,'POST',body),call(endpoint,'POST',body)]);assert(results.every(r=>r.status<300));assert.equal(rows.length,1);assert.equal(results[0].body.order_number,results[1].body.order_number);assert.equal(results[0].body.total_cents,890);assert(!('customer_name' in results[0].body));assert(!JSON.stringify(results).includes('sb_secret'));});
 test('reusing the idempotency key with changed contents is rejected',async()=>{const body=order();await call(endpoint,'POST',body);const r=await call(endpoint,'POST',{...body,customer_name:'Changed'});assert.equal(r.status,409);assert.equal(rows.length,1);});

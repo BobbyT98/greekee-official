@@ -557,8 +557,8 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
           <div class="flow-line"></div>
         </div>
         <div class="flow-text">
-          <h4>Check out on WhatsApp</h4>
-          <p>Review your bowls and choose pickup or delivery. Your order opens in WhatsApp, ready for you to send.</p>
+          <h4>Save your order, then message us</h4>
+          <p>Review your bowls and choose pickup or delivery. We save your request and open WhatsApp so you can message us.</p>
         </div>
       </div>
       <div class="flow-row">
@@ -632,16 +632,16 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
         <label for="custName">Name</label>
         <input type="text" id="custName" autocomplete="name" placeholder="Your name">
       </div>
-      <div class="field"><label for="custCountry">Phone / WhatsApp number</label><div style="display:flex;gap:8px"><select id="custCountry" aria-label="Phone country code" style="width:42%;flex:none"></select><input type="tel" id="custPhone" autocomplete="tel-national" inputmode="tel" maxlength="30" placeholder="e.g. 9123 4567"></div><div style="display:none" aria-hidden="true"><input id="website" tabindex="-1" autocomplete="off"></div></div>
+      <div class="field"><label for="custPhone">Phone / WhatsApp number</label><div style="display:flex;gap:8px"><select id="custCountry" aria-label="Phone country code" style="width:42%;flex:none"></select><input type="tel" id="custPhone" autocomplete="tel-national" inputmode="tel" maxlength="30" placeholder="e.g. 9123 4567"></div><div style="display:none" aria-hidden="true"><input id="website" tabindex="-1" autocomplete="off"></div></div>
       <div class="toggle-row">
-        <button class="toggle-btn active" id="pickupBtn" data-mode="pickup">Pickup</button>
-        <button class="toggle-btn" id="deliveryBtn" data-mode="delivery">Delivery</button>
+        <button class="toggle-btn active" id="pickupBtn" data-mode="pickup" aria-pressed="true">Pickup</button>
+        <button class="toggle-btn" id="deliveryBtn" data-mode="delivery" aria-pressed="false">Delivery</button>
       </div>
       <div class="field" id="pickupField">
         <label>Pickup location</label>
         <div class="toggle-row">
-          <button class="toggle-btn active" id="punggolBtn" data-loc="Punggol">Punggol</button>
-          <button class="toggle-btn" id="hougangBtn" data-loc="Hougang">Hougang</button>
+          <button class="toggle-btn active" id="punggolBtn" data-loc="Punggol" aria-pressed="true">Punggol</button>
+          <button class="toggle-btn" id="hougangBtn" data-loc="Hougang" aria-pressed="false">Hougang</button>
         </div>
         <label style="margin-top:12px;" for="pickupDate">Pickup date</label>
         <input type="date" id="pickupDate">
@@ -1187,16 +1187,20 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
   document.getElementById('hougangBtn').addEventListener('click', () => setPickupLoc('Hougang'));
   function setPickupLoc(loc){
     pickupLoc = loc;
-    document.getElementById('punggolBtn').classList.toggle('active', loc === 'Punggol');
-    document.getElementById('hougangBtn').classList.toggle('active', loc === 'Hougang');
+    for(const [id,selected] of [['punggolBtn',loc === 'Punggol'],['hougangBtn',loc === 'Hougang']]){
+      document.getElementById(id).classList.toggle('active', selected);
+      document.getElementById(id).setAttribute('aria-pressed',String(selected));
+    }
   }
   document.getElementById('pickupBtn').addEventListener('click', () => setMode('pickup'));
   document.getElementById('deliveryBtn').addEventListener('click', () => setMode('delivery'));
 
   function setMode(m){
     mode = m;
-    document.getElementById('pickupBtn').classList.toggle('active', m === 'pickup');
-    document.getElementById('deliveryBtn').classList.toggle('active', m === 'delivery');
+    for(const [id,selected] of [['pickupBtn',m === 'pickup'],['deliveryBtn',m === 'delivery']]){
+      document.getElementById(id).classList.toggle('active', selected);
+      document.getElementById(id).setAttribute('aria-pressed',String(selected));
+    }
     document.getElementById('addressField').style.display = m === 'delivery' ? 'block' : 'none';
     document.getElementById('deliveryRegionField').style.display = m === 'delivery' ? 'block' : 'none';
     document.getElementById('pickupField').style.display = m === 'pickup' ? 'block' : 'none';
@@ -1275,14 +1279,10 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
   function toDateInputValue(d){ return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); }
 
   function formatTime(d){
-    let h = d.getHours();
-    const m = d.getMinutes();
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12; if (h === 0) h = 12;
-    return `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
+    return new Intl.DateTimeFormat('en-SG',{timeZone:'Asia/Singapore',hour:'numeric',minute:'2-digit',hour12:true}).format(d).replace(/\b(am|pm)\b/gi,s=>s.toUpperCase());
   }
   function formatPickupLabel(d){
-    const dateStr = d.toLocaleDateString('en-SG', { weekday:'short', day:'numeric', month:'short' });
+    const dateStr = d.toLocaleDateString('en-SG', { timeZone:'Asia/Singapore', weekday:'short', day:'numeric', month:'short' });
     return `${dateStr}, ${formatTime(d)}`;
   }
 

@@ -11,6 +11,9 @@ function names_() {
  if(!['TEST','LIVE'].includes(ENVIRONMENT))throw Error('Invalid environment');
  return {orders:'Greekee Orders — '+ENVIRONMENT,dashboards:{Fiona:'Fiona Dashboard — '+ENVIRONMENT,Caleb:'Caleb Dashboard — '+ENVIRONMENT}};
 }
+function bowlRankingFormula_(source,location){
+ return '=IFERROR(QUERY('+source+'A2:K,"select F,sum(G) where F is not null and F <> \'Special Order\' and C = \''+location+'\' and K <> \'Cancelled\' and K <> \'Pending payment\' and K <> \'Pending confirmation\' group by F order by sum(G) desc label F \'\', sum(G) \'\'",0),{"No bowls yet",0})';
+}
 function safe_(value){const s=String(value==null?'':value);return /^[=+\-@\t\r]/.test(s)?"'"+s:s;}
 function prepareOrders_(ss,create) {
  const name=names_().orders;
@@ -53,9 +56,9 @@ function prepareDashboard_(ss,person){
  sheet.getRange('A1:L44').setBackground('#FAF7EF').setFontColor('#263A2D').setFontFamily('Arial');
  function block_(a1,value,bg,fg,size){const range=sheet.getRange(a1);range.merge().setBackground(bg).setFontColor(fg).setFontSize(size).setFontWeight('bold').setVerticalAlignment('middle');const cell=range.getCell(1,1);if(value[0]==='=')cell.setFormula(value);else cell.setValue(value);}
  block_('A1:L2','GREEKEE  /  '+person.toUpperCase()+' ORDER PULSE','#2F4935','#FFFFFF',23);
- block_('A3:L3',location+' pickup + assigned deliveries  •  '+ENVIRONMENT+' orders only','#E7ECD9','#3D5944',11);
+ block_('A3:L3',location+' pickup + assigned deliveries  •  '+(ENVIRONMENT==='TEST'?'TEST queue + Q3 bowl history':'LIVE orders only'),'#E7ECD9','#3D5944',11);
  block_('A9:L9','AT A GLANCE','#DCE8D4','#2F4935',13);
- block_('A14:L14',"WHAT'S MOVING  /  live "+ENVIRONMENT+' data','#2F4935','#FFFFFF',13);
+ block_('A14:L14',ENVIRONMENT==='TEST'?'BOWL RANKING / Q3 + TEST  •  LIVE TEST ACTIVITY':"WHAT'S MOVING  /  live LIVE data",'#2F4935','#FFFFFF',13);
  const cards=[
   ['A','C','ORDERS','=SUMIFS('+source+'V2:V,'+source+'C2:C,"'+location+'",'+source+'A2:A,"<>HISTORY:*")','#E9F1E2',false],
   ['D','F','BOWLS TO PREPARE','=SUMIFS('+source+'G2:G,'+source+'C2:C,"'+location+'",'+source+'A2:A,"<>HISTORY:*",'+source+'K2:K,"Order accepted")+SUMIFS('+source+'G2:G,'+source+'C2:C,"'+location+'",'+source+'A2:A,"<>HISTORY:*",'+source+'K2:K,"Confirmed")+SUMIFS('+source+'G2:G,'+source+'C2:C,"'+location+'",'+source+'A2:A,"<>HISTORY:*",'+source+'K2:K,"Preparing")+SUMIFS('+source+'G2:G,'+source+'C2:C,"'+location+'",'+source+'A2:A,"<>HISTORY:*",'+source+'K2:K,"Ready")','#F7ECD4',false],
@@ -72,7 +75,7 @@ function prepareDashboard_(ss,person){
  small.forEach(([left,right,label,formula,money])=>{block_(left+'11:'+right+'11',label,'#F1EFE7','#5B6C5A',9);block_(left+'12:'+right+'12',formula,'#F1EFE7','#263A2D',19);if(money)sheet.getRange(left+'12').setNumberFormat('$#,##0.00');});
  [[1,42],[2,22],[3,30],[4,16],[5,30],[6,34],[7,34],[8,18],[9,34],[10,14],[11,28],[12,48],[13,18],[14,34],[15,14]].forEach(([row,height])=>sheet.setRowHeight(row,height));
  sheet.getRange('P1:Q1').setValues([['Product','Bowls']]);
- sheet.getRange('P2').setFormula('=IFERROR(QUERY('+source+'A2:K,"select F,sum(G) where F is not null and C = \''+location+'\' and K <> \'Cancelled\' and K <> \'Pending payment\' and K <> \'Pending confirmation\' and not A starts with \'HISTORY:\' group by F label F \'\', sum(G) \'\'",0),{"No orders yet",0})');
+ sheet.getRange('P2').setFormula(bowlRankingFormula_(source,location));
  sheet.getRange('R1:S1').setValues([['Date','Bowls due']]);
  for(let i=0;i<7;i++){sheet.getRange(i+2,18).setFormula('=TODAY()+'+i);sheet.getRange(i+2,19).setFormula('=SUMIFS('+source+'G2:G,'+source+'C2:C,"'+location+'",'+source+'A2:A,"<>HISTORY:*",'+source+'J2:J,">="&R'+(i+2)+','+source+'J2:J,"<"&(R'+(i+2)+'+1),'+source+'K2:K,"<>Cancelled")');}
  sheet.getRange('R2:R8').setNumberFormat('ddd d mmm');
@@ -91,7 +94,7 @@ function prepareDashboard_(ss,person){
   if(type===Charts.ChartType.PIE)builder=builder.setOption('pieHole',0.56);
   sheet.insertChart(builder.build());
  });
- block_('A54:L54',person+' • '+location+' queue  •  Charts update when orders sync.','#E7ECD9','#3D5944',10);
+ block_('A54:L54',ENVIRONMENT==='TEST'?person+' • Named bowls include Q3 history and accepted/delivered TEST orders. Custom “Special Order” lines have no named bowl; other cards and charts show TEST only.':person+' • '+location+' queue  •  Charts update when orders sync.','#E7ECD9','#3D5944',10);
  sheet.hideColumns(16,8);
  return sheet;
 }
@@ -193,6 +196,10 @@ function refreshGreekeeHistory(){
 }
 function updateHistoryDashboard_(sheet,person){
  const source="'"+names_().orders.replace(/'/g,"''")+"'!",location=person==='Fiona'?'Punggol':'Hougang';
+ sheet.getRange('P2').setFormula(bowlRankingFormula_(source,location));
+ sheet.getRange('A3').setValue(location+' pickup + assigned deliveries  •  TEST queue + Q3 bowl history');
+ sheet.getRange('A14').setValue('BOWL RANKING / Q3 + TEST  •  LIVE TEST ACTIVITY');
+ sheet.getRange('A54').setValue(person+' • Named bowls include Q3 history and accepted/delivered TEST orders. Custom “Special Order” lines have no named bowl; other cards and charts show TEST only.');
  const criteria=source+'A2:A,"HISTORY:*",'+source+'C2:C,"'+location+'",'+source+'K2:K,';
  const formulas={
   A63:'=SUMIFS('+source+'G2:G,'+criteria+'"Delivered")',
