@@ -14,11 +14,11 @@
   const customer_name=requireValue('custName','Please add your name.');
   const phone=GREEKEE_PHONE.normalize(byId('custCountry'),byId('custPhone'));
   const address=delivery?requireValue('custAddress','Please add your delivery address.'):'';
-  const fulfillment_date=requireValue(mode==='pickup'?'pickupDate':delivery.region==='East'?'eastDate':'nswDate','Please choose a collection or delivery date.');
+  const fulfillment_date=requireValue(mode==='pickup'?'pickupDate':delivery.weekendOnly?'nswDate':'eastDate','Please choose a collection or delivery date.');
   const pickup_slot=mode==='pickup'?requireValue('pickupTime','Please choose an available pickup time.'):'';
   if(mode==='pickup'&&new Date(pickup_slot).getTime()<Date.now()+24*60*60000)throw Error('Please choose a pickup time at least 24 hours from now.');
   if(delivery&&fulfillment_date<earliestDeliveryDate())throw Error('Delivery needs at least 24 hours of notice. Please choose a later date.');
-  return {customer_name,phone,fulfillment:mode,location:pickupLoc,fulfillment_date,pickup_slot,address,delivery_region:delivery?.region||'',delivery_area:delivery?.region==='East'?delivery.location:'',notes:byId('custNotes').value.trim(),website:byId('website').value,items:cart.map(c=>({product_id:c.product_id,quantity:c.qty,addons:c.addons||[]}))};
+  return {customer_name,phone,fulfillment:mode,location:pickupLoc,fulfillment_date,pickup_slot,address,delivery_region:delivery?.region||'',delivery_area:delivery?.location||'',notes:byId('custNotes').value.trim(),website:byId('website').value,items:cart.map(c=>({product_id:c.product_id,quantity:c.qty,addons:c.addons||[]}))};
  }
  async function attemptKey(payload){
   const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(payload)));

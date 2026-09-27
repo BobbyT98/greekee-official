@@ -11,7 +11,7 @@
 | Delivery pricing | East Pasir Ris showed a $6 fee, and changing to Kovan recalculated the fee to $4 for the same $8.90 bowl. |
 | Routing and safety | Automated tests cover location assignment, server-calculated price and add-ons, phone country lengths, pickup slots, discounts, parallel duplicate submissions, payment audit, revision conflicts, and TEST Sheets retries. |
 | Shared admin access | New API test checks that a Punggol partner can read a Hougang queue and order, but a cross-location PATCH is denied. The UI shows cross-location details without an edit form. |
-| Build | Latest local pre-order change: `npm test`: 32 passed, 0 failed. `npm run build`: passed. |
+| Build | Latest pickup-calendar correction: `npm test`: 33 passed, 0 failed, including a foreign-time-zone calendar regression; `npm run build`: passed. |
 | Live follow-up | Bobby saw both queues, confirmed fast tab switching, deployed the existing TEST Apps Script Web app, ran `refreshGreekeeHistory`, and saw Choconana 59/32 lead the two charts. |
 | Partner and phone checks | Fiona and Caleb's Greekee-Test accounts were created, confirmed and assigned to their own locations. The team reported successful login and cross-location read-only checks. Bobby reported the storefront/cart and admin layout looked good on a phone. |
 
@@ -23,7 +23,7 @@
 4. **Accessible checkout controls.** The phone input has a real label, and the selected pickup/delivery and location buttons expose their pressed state to assistive technology.
 5. **Historical bowl chart source.** The live TEST Sheet was already corrected to include named Q3 history plus accepted/delivered TEST bowls; this package keeps Apps Script and GitHub source aligned. History does not inflate current-order counts.
 6. **Order desk tab speed (follow-up).** Switching between All, Fiona and Caleb now filters the already loaded complete order list in the browser. The Refresh button and edits still request current data. For a queue larger than the first 100 orders, tabs keep their server request so the view is not mistaken for a complete list. A request sequence check prevents a slow earlier response from replacing the newest tab.
-7. **Public pre-order rule.** Customer pickup slots need a full 24 hours. Delivery dates have no time, so their start must be at least 24 hours away. Same-day dates are no longer offered; the server rejects them even if the browser is bypassed. Staff manual orders remain a deliberate exception. Check the TEST Preview date picker after uploading this change.
+7. **Public pre-order rule.** Customer pickup slots need a full 24 hours. The pickup calendar begins at the first day that actually has an eligible slot, so a day with no valid times cannot be selected. Delivery dates have no time, so their start must be at least 24 hours away. The server rejects shorter notice even if the browser is bypassed. Staff manual orders remain a deliberate exception. Check the TEST Preview date picker after uploading this correction.
 
 ## Remaining checks and improvements
 
@@ -35,3 +35,7 @@
 | Later | Consider an order-wide search or server-side stage filter for busy periods. | The page loads 100 orders at a time; search, status and summary cards filter/count only loaded rows, as the on-screen note says. |
 
 The admin login remains in place because the order desk contains private phone numbers, delivery addresses and payment actions. The refresh cookie lasts up to seven days, so ordinary return visits can reopen the desk without typing the password again. Removing login would expose those details to anyone with the URL. The automated mobile screenshot tool timed out; the phone layout conclusion is Bobby's manual check.
+
+## Delivery expansion (TEST source, pending Bobby's GitHub upload)
+
+Customer area selection now includes Bedok, Changi residential, North, Central, South, West and far West / special destinations. Nearby is $4, the rest of East $6, North/South/West $10, and far West/special $15. East/nearby is free at $35 subtotal; all other areas at $50. North/South/West remain weekends only; far West/special is by arrangement and needs timing and access confirmed on WhatsApp. Server validates area/region and recomputes prices. The pickup date-picker fix is bundled in the same upcoming upload. Local tests: 34 passed, build passed; live TEST checkout still needs a visual pass after Vercel deploy.

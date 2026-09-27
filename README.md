@@ -26,3 +26,17 @@ npm run dev
 ```
 
 `public/`, `node_modules/`, and real `.env` files are generated or local and are excluded from Git. Production remains on `main` until the preview is approved.
+
+## TEST delivery pricing (27 September 2026)
+
+All trips are planned from Punggol on Bobby's motorcycle. These customer fees are in Singapore dollars. The team confirms timing on WhatsApp; website orders remain requests until confirmed. Special destinations are by arrangement, including access requirements.
+
+| Area | Examples | Fee | Schedule | Free delivery |
+|---|---|---:|---|---|
+| Nearby | Punggol, Sengkang, Hougang, Kovan, Buangkok | $4 | Daily | Subtotal $35+ |
+| East | Pasir Ris, Tampines, Bedok, Changi residential | $6 | Daily | Subtotal $35+ |
+| North and central | Yishun, Woodlands, Bishan, Toa Payoh, city | $10 | Weekends | Subtotal $50+ |
+| South and West | Queenstown, Clementi, Bukit Batok, Jurong East | $10 | Weekends | Subtotal $50+ |
+| Far West / special | Jurong West, Tuas, Sentosa, other or restricted | $15 | By arrangement | Subtotal $50+ |
+
+Checkout groups the named areas under East, North, South, West and Special. The selected area sets the fee. Free-delivery thresholds use the bowl subtotal before delivery and any manual discount. Hougang, Kovan and Buangkok still belong to Caleb's queue; every other delivery belongs to Fiona's. Admin can enter an agreed fee for a manual order. Server validation recalculates the fee and checks that the area matches its region. Change `assets/catalog.js` and the checkout/admin/server tests together when adjusting rates. Production `main` is not part of this TEST change.

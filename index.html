@@ -651,21 +651,18 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
       </div>
       <div class="field" id="deliveryRegionField" style="display:none;">
         <label for="deliveryRegion">Delivery region</label>
-        <select id="deliveryRegion">
-          <option value="East" selected>East</option>
-          <option value="North">North</option>
-          <option value="South">South</option>
-          <option value="West">West</option>
-        </select>
+        <select id="deliveryRegion"><option value="East">Nearby &amp; East · daily</option><option value="North">North · weekends</option><option value="South">Central &amp; South · weekends</option><option value="West">West · weekends</option><option value="Special">Far West &amp; special · by arrangement</option></select>
+      </div>
+      <div class="field" id="deliveryAreaField" style="display:none;">
+        <label for="eastLocation">Delivery area</label><select id="eastLocation"></select>
       </div>
       <div class="field" id="eastLocationField" style="display:none;">
-        <label for="eastLocation">East location</label>
-        <select id="eastLocation"></select><label style="margin-top:12px" for="eastDate">Preferred delivery date</label><input type="date" id="eastDate"><div class="fine-print" style="margin-top:4px;">Delivery needs at least 24 hours of notice. We'll confirm the timing with you.</div>
+        <label for="eastDate">Preferred delivery date</label><input type="date" id="eastDate">
+        <div class="fine-print" style="margin-top:4px;">At least 24 hours ahead. We'll confirm the timing and any special access requirements.</div>
       </div>
       <div class="field" id="nswDateField" style="display:none;">
-        <label for="nswDate">Delivery date (weekends only)</label>
-        <input type="date" id="nswDate">
-        <div class="fine-print" style="margin-top:4px;">North / South / West delivery is on Saturdays &amp; Sundays, with at least 24 hours of notice. We'll confirm the timing with you.</div>
+        <label for="nswDate">Delivery date (weekends only)</label><input type="date" id="nswDate">
+        <div class="fine-print" style="margin-top:4px;">North, Central, South and West delivery is on Saturdays &amp; Sundays, with at least 24 hours of notice. We'll confirm the timing.</div>
       </div>
       <div class="field" id="addressField" style="display:none;">
         <label for="custAddress">Delivery address</label>
@@ -703,18 +700,9 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
   };
   const DEFAULT_WHATSAPP_NUMBER = WHATSAPP_NUMBERS.Punggol; // used for North/South/West delivery — fee TBC, no dedicated number given
 
-  const NSW_FREE_THRESHOLD = 50; // North/South/West free delivery threshold
-  const EAST_FREE_THRESHOLD = 35; // East free delivery threshold
-  const EAST_LOCATIONS = [
-    { name:'Pasir Ris', fee:6, whatsapp:WHATSAPP_NUMBERS.Punggol },
-    { name:'Tampines', fee:6, whatsapp:WHATSAPP_NUMBERS.Punggol },
-    { name:'Sengkang', fee:4, whatsapp:WHATSAPP_NUMBERS.Punggol },
-    { name:'Punggol', fee:4, whatsapp:WHATSAPP_NUMBERS.Punggol },
-    { name:'Hougang', fee:4, whatsapp:WHATSAPP_NUMBERS.Hougang },
-    { name:'Kovan', fee:4, whatsapp:WHATSAPP_NUMBERS.Hougang },
-    { name:'Buangkok', fee:4, whatsapp:WHATSAPP_NUMBERS.Hougang },
-  ];
-  const NSW_FLAT_FEE = 10; // North/South/West delivery fee below the $50 free threshold, weekends only
+  const DELIVERY_AREAS = GREEKEE_CATALOG.deliveryAreas.map(([name,region,cents,location]) => ({name,region,fee:cents/100,whatsapp:WHATSAPP_NUMBERS[location]}));
+  const EAST_FREE_THRESHOLD = GREEKEE_CATALOG.eastFreeCents/100;
+  const OTHER_FREE_THRESHOLD = GREEKEE_CATALOG.otherFreeCents/100;
 
   const MENU = [
     { id:'berry-bliss', name:'Berry Bliss', desc:'Plain strained yogurt, strawberry, blueberry, raspberry, granola, honey drizzle and berry sauce.', price:8.90,
@@ -1207,6 +1195,7 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
     if (m === 'delivery'){
       updateDeliveryUI();
     } else {
+      document.getElementById('deliveryAreaField').style.display = 'none';
       document.getElementById('eastLocationField').style.display = 'none';
       document.getElementById('nswDateField').style.display = 'none';
       document.getElementById('deliveryFeeNote').style.display = 'none';
@@ -1217,52 +1206,40 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
 
   // --- Delivery region / fee logic ---
   const eastLocationSelect = document.getElementById('eastLocation');
-  eastLocationSelect.innerHTML = EAST_LOCATIONS.map(l => `<option value="${l.name}">${l.name} — $${l.fee.toFixed(2)}</option>`).join('');
-
-  function getEastLocation(){
-    return EAST_LOCATIONS.find(l => l.name === eastLocationSelect.value) || EAST_LOCATIONS[0];
+  function populateDeliveryAreas(){
+    const region = document.getElementById('deliveryRegion').value;
+    const previous = eastLocationSelect.value;
+    eastLocationSelect.replaceChildren(...DELIVERY_AREAS.filter(a=>a.region===region).map(a=>{
+      const option=document.createElement('option');option.value=a.name;option.textContent=`${a.name} — $${a.fee.toFixed(2)}`;return option;
+    }));
+    if ([...eastLocationSelect.options].some(option=>option.value===previous))eastLocationSelect.value=previous;
   }
-
+  populateDeliveryAreas();
   function computeDelivery(){
     const region = document.getElementById('deliveryRegion').value;
-    const total = cartTotal();
-    if (region === 'East'){
-      const loc = getEastLocation();
-      const free = total >= EAST_FREE_THRESHOLD;
-      return { region, location:loc.name, fee: free ? 0 : loc.fee, free, whatsapp: loc.whatsapp, feeKnown:true, threshold:EAST_FREE_THRESHOLD };
-    }
-    // North / South / West — weekends only, pre-order
-    const free = total >= NSW_FREE_THRESHOLD;
-    return { region, location:region, fee: free ? 0 : NSW_FLAT_FEE, free, whatsapp: DEFAULT_WHATSAPP_NUMBER, feeKnown:true, weekendOnly:true, threshold:NSW_FREE_THRESHOLD };
+    const area = DELIVERY_AREAS.find(a=>a.region===region&&a.name===eastLocationSelect.value);
+    const threshold = region==='East'?EAST_FREE_THRESHOLD:OTHER_FREE_THRESHOLD;
+    const free=cartTotal()>=threshold;
+    return {region,location:area.name,fee:free?0:area.fee,free,whatsapp:area.whatsapp,feeKnown:true,weekendOnly:region!=='East'&&region!=='Special',byArrangement:region==='Special',threshold};
   }
-
   function updateDeliveryUI(){
     const region = document.getElementById('deliveryRegion').value;
-    document.getElementById('eastLocationField').style.display = region === 'East' ? 'block' : 'none';
-    document.getElementById('nswDateField').style.display = region === 'East' ? 'none' : 'block';
-
-    const info = computeDelivery();
-
-    const feeRow = document.getElementById('deliverySummaryRow');
-    feeRow.style.display = 'flex';
-    document.getElementById('deliveryFeeAmount').textContent = info.free ? 'Free' : money(info.fee);
-    document.getElementById('drawerTotal').textContent = money(cartTotal() + info.fee);
-
-    const note = document.getElementById('deliveryFeeNote');
-    const remaining = info.threshold - cartTotal();
-    const parts = [];
-    if (info.free){
-      parts.push(`Free delivery — your order qualifies (${region} free delivery from ${money(info.threshold)}).`);
-    } else if (remaining > 0){
-      parts.push(`Add ${money(remaining)} more to your order for free delivery!`);
-    }
-    if (info.weekendOnly) parts.push(`${region} delivery is weekends only, pre-order.`);
-    note.style.display = 'block';
-    note.textContent = parts.join(' ');
+    const weekendOnly = region!=='East'&&region!=='Special';
+    document.getElementById('deliveryAreaField').style.display='block';
+    document.getElementById('eastLocationField').style.display=weekendOnly?'none':'block';
+    document.getElementById('nswDateField').style.display=weekendOnly?'block':'none';
+    const info=computeDelivery();
+    document.getElementById('deliverySummaryRow').style.display='flex';
+    document.getElementById('deliveryFeeAmount').textContent=info.free?'Free':money(info.fee);
+    document.getElementById('drawerTotal').textContent=money(cartTotal()+info.fee);
+    const note=document.getElementById('deliveryFeeNote');
+    const parts=[info.free?`Free delivery from ${money(info.threshold)} for this area.`:`Add ${money(info.threshold-cartTotal())} for free delivery.`];
+    if(info.weekendOnly)parts.push('Delivery here is weekends only.');
+    if(info.byArrangement)parts.push('By arrangement: we will confirm access and timing on WhatsApp.');
+    note.style.display='block';note.textContent=parts.join(' ');
   }
-
-  document.getElementById('deliveryRegion').addEventListener('change', updateDeliveryUI);
-  eastLocationSelect.addEventListener('change', updateDeliveryUI);
+  document.getElementById('deliveryRegion').addEventListener('change',()=>{populateDeliveryAreas();updateDeliveryUI();});
+  eastLocationSelect.addEventListener('change',updateDeliveryUI);
   document.getElementById('nswDate').addEventListener('change', () => {
     const input = document.getElementById('nswDate');
     if (input.value){
@@ -1286,8 +1263,7 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
     return `${dateStr}, ${formatTime(d)}`;
   }
 
-  function getPickupSlotsForDate(dateStr){
-    const now = new Date();
+  function getPickupSlotsForDate(dateStr, now=new Date()){
     const opening = new Date(dateStr+'T10:00:00+08:00');
     const lastSlot = new Date(dateStr+'T22:00:00+08:00'); // last pickup slot 10:00 PM (closing time)
     const minTime = new Date(now.getTime() + 24 * 60 * 60000);
@@ -1303,22 +1279,27 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
     return slots;
   }
 
+  function firstPickupDate(now=new Date()){
+    const max = toDateInputValue(new Date(now.getTime() + 6 * 24 * 60 * 60000));
+    let day = toDateInputValue(new Date(now.getTime() + 24 * 60 * 60000));
+    while (day <= max && getPickupSlotsForDate(day, now).length === 0){
+      const midnight = new Date(day+'T00:00:00+08:00');
+      day = toDateInputValue(new Date(midnight.getTime() + 24 * 60 * 60000));
+    }
+    return day <= max ? day : '';
+  }
+
   function refreshPickupDateConstraints(){
     const dateInput = document.getElementById('pickupDate');
     const today = new Date();
     const maxDate = new Date(today.getTime() + 6 * 24 * 60 * 60000);
-    const minVal = toDateInputValue(new Date(today.getTime() + 24 * 60 * 60000));
+    const minVal = firstPickupDate(today);
     const maxVal = toDateInputValue(maxDate);
     dateInput.min = minVal;
     dateInput.max = maxVal;
+    if (!minVal){dateInput.value = '';return;}
     if (!dateInput.value || dateInput.value < minVal || dateInput.value > maxVal){
       dateInput.value = minVal;
-    }
-    // Advance when tomorrow's 24-hour cutoff falls after closing time.
-    if (dateInput.value === minVal && getPickupSlotsForDate(dateInput.value).length === 0){
-      const nextDay = new Date(minVal+'T00:00:00+08:00');
-      const nextVal = toDateInputValue(new Date(nextDay.getTime() + 24 * 60 * 60000));
-      if (nextVal <= maxVal) dateInput.value = nextVal;
     }
   }
 
@@ -1353,9 +1334,7 @@ html{scroll-padding-top:128px}body{color:var(--berry)}.wrap{max-width:1440px;pad
     }
   }
   document.getElementById('pickupDate').addEventListener('change', () => {
-    const dateInput = document.getElementById('pickupDate');
-    if (dateInput.value < dateInput.min) dateInput.value = dateInput.min;
-    if (dateInput.value > dateInput.max) dateInput.value = dateInput.max;
+    refreshPickupDateConstraints();
     renderPickupTimes();
   });
   refreshPickupDateConstraints();
