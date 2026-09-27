@@ -1,6 +1,6 @@
 # Greekee TEST — checkout and order desk audit
 
-27 September 2026. Scope: current deployed Preview storefront on desktop; local updated source, API, database and Sheets tests. This is a TEST audit. No new order was submitted during this pass, and Production was not changed.
+27 September 2026. Scope: deployed Preview storefront on desktop; updated source, API, database and Sheets tests; Bobby's live queue and chart checks after deployment. This is a TEST audit. No new order was submitted during this pass, and Production was not changed.
 
 ## Verified
 
@@ -12,6 +12,7 @@
 | Routing and safety | Automated tests cover location assignment, server-calculated price and add-ons, phone country lengths, pickup slots, discounts, parallel duplicate submissions, payment audit, revision conflicts, and TEST Sheets retries. |
 | Shared admin access | New API test checks that a Punggol partner can read a Hougang queue and order, but a cross-location PATCH is denied. The UI shows cross-location details without an edit form. |
 | Build | `npm test`: 31 passed, 0 failed. `npm run build`: passed. |
+| Live follow-up | Bobby saw both queues, confirmed fast tab switching, deployed the existing TEST Apps Script Web app, ran `refreshGreekeeHistory`, and saw Choconana 59/32 lead the two charts. |
 
 ## Fixed in this update
 
@@ -26,7 +27,7 @@
 
 | Priority | Item | Why it matters / next check |
 |---|---|---|
-| Before release | Sign in as Fiona and Caleb on the newly deployed Preview; confirm both can view all orders, only the assigned partner can edit, and Bobby can manage both. | The new code is local until Bobby uploads it; this live authenticated flow has not been exercised in this pass. |
+| Before release | Fiona and Caleb each sign in on their own device; confirm both can view all orders but edit only their assigned ones. | Bobby checked both queues on the live Preview. The two one-location accounts have not yet been exercised live. |
 | Before release | Check the full storefront/cart and admin pages on a narrow phone after deployment. | The desktop visual pass was clear, but the mobile screenshot tool timed out; do not treat mobile layout as visually verified. |
 | Before release | Confirm customer-facing bowl names against the intended menu. | The site says “Choco Nana” and “Sunset Dream”; the historical chart uses “Choconana” and older Q3 names. Prices and IDs were deliberately left unchanged pending menu confirmation. |
 | Later | Let staff apply or revise a discount on an already saved website order, with a reason and audited total recalculation. | Today the discount is only in the **new manual order** form. This matters for a FOC decision made after a website checkout. |
