@@ -13,6 +13,7 @@
 | Shared admin access | New API test checks that a Punggol partner can read a Hougang queue and order, but a cross-location PATCH is denied. The UI shows cross-location details without an edit form. |
 | Build | `npm test`: 31 passed, 0 failed. `npm run build`: passed. |
 | Live follow-up | Bobby saw both queues, confirmed fast tab switching, deployed the existing TEST Apps Script Web app, ran `refreshGreekeeHistory`, and saw Choconana 59/32 lead the two charts. |
+| Partner and phone checks | Fiona and Caleb's Greekee-Test accounts were created, confirmed and assigned to their own locations. The team reported successful login and cross-location read-only checks. Bobby reported the storefront/cart and admin layout looked good on a phone. |
 
 ## Fixed in this update
 
@@ -27,10 +28,9 @@
 
 | Priority | Item | Why it matters / next check |
 |---|---|---|
-| Before release | Fiona and Caleb each sign in on their own device; confirm both can view all orders but edit only their assigned ones. | Bobby checked both queues on the live Preview. The two one-location accounts have not yet been exercised live. |
-| Before release | Check the full storefront/cart and admin pages on a narrow phone after deployment. | The desktop visual pass was clear, but the mobile screenshot tool timed out; do not treat mobile layout as visually verified. |
 | Before release | Confirm customer-facing bowl names against the intended menu. | The site says “Choco Nana” and “Sunset Dream”; the historical chart uses “Choconana” and older Q3 names. Prices and IDs were deliberately left unchanged pending menu confirmation. |
+| Before Production | Repeat a saved TEST checkout and Sheets sync on the final code. | The prior end-to-end saved orders passed before the latest UI and shared-read changes. Recent checks avoided adding extra test orders. |
 | Later | Let staff apply or revise a discount on an already saved website order, with a reason and audited total recalculation. | Today the discount is only in the **new manual order** form. This matters for a FOC decision made after a website checkout. |
 | Later | Consider an order-wide search or server-side stage filter for busy periods. | The page loads 100 orders at a time; search, status and summary cards filter/count only loaded rows, as the on-screen note says. |
 
-The admin login remains in place because the order desk contains private phone numbers, delivery addresses and payment actions. The refresh cookie lasts up to seven days, so ordinary return visits can reopen the desk without typing the password again. Removing login would expose those details to anyone with the URL.
+The admin login remains in place because the order desk contains private phone numbers, delivery addresses and payment actions. The refresh cookie lasts up to seven days, so ordinary return visits can reopen the desk without typing the password again. Removing login would expose those details to anyone with the URL. The automated mobile screenshot tool timed out; the phone layout conclusion is Bobby's manual check.
